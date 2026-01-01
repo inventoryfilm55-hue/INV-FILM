@@ -7,6 +7,17 @@ interface AboutViewProps {
 }
 
 const AboutView: React.FC<AboutViewProps> = ({ content }) => {
+  // G-Drive Link Resolver helper
+  const resolveImg = (url: string) => {
+    if (!url) return '';
+    if (url.startsWith('data:')) return url;
+    const driveIdMatch = url.match(/(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/);
+    if (driveIdMatch && driveIdMatch[1]) {
+      return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
+    }
+    return url;
+  };
+
   return (
     <div className="max-w-[1800px] mx-auto px-6 md:px-10 py-32 animate-fade-up">
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-start">
@@ -23,10 +34,10 @@ const AboutView: React.FC<AboutViewProps> = ({ content }) => {
         
         <div className="flex gap-4">
           <div className="w-1/2 aspect-[3/4] bg-neutral-900/50 rounded-[12px] overflow-hidden border border-white/5">
-             <img src={content.img1} className="w-full h-full object-cover grayscale opacity-60 hover:opacity-100 transition-opacity duration-700" />
+             <img src={resolveImg(content.img1)} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-60 hover:opacity-100 transition-opacity duration-700" />
           </div>
           <div className="w-1/2 aspect-[3/4] bg-neutral-900/50 rounded-[12px] overflow-hidden mt-12 border border-white/5">
-             <img src={content.img2} className="w-full h-full object-cover grayscale opacity-40 hover:opacity-100 transition-opacity duration-700" />
+             <img src={resolveImg(content.img2)} referrerPolicy="no-referrer" className="w-full h-full object-cover grayscale opacity-40 hover:opacity-100 transition-opacity duration-700" />
           </div>
         </div>
       </div>

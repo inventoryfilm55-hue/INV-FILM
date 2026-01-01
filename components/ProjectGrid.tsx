@@ -13,15 +13,14 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
     ? projects 
     : projects.filter(p => p.category === activeCategory);
 
-  // Fallback and URL fixer for grid display
+  // Robust G-Drive Resolver using lh3 proxy
   const resolveThumbnail = (url: string) => {
     if (!url) return '';
     if (url.startsWith('data:')) return url;
     
-    // Auto-patch old uc?export links to new thumbnail?id links
-    const driveIdMatch = url.match(/(?:\/file\/d\/|id=|uc\?.*?id=)([a-zA-Z0-9_-]{25,})/);
+    const driveIdMatch = url.match(/(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/);
     if (driveIdMatch && driveIdMatch[1]) {
-      return `https://drive.google.com/thumbnail?id=${driveIdMatch[1]}&sz=w1000`;
+      return `https://lh3.googleusercontent.com/d/${driveIdMatch[1]}`;
     }
     return url;
   };
@@ -41,7 +40,6 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 src={resolveThumbnail(project.thumbnail)}
                 alt={project.title}
                 referrerPolicy="no-referrer"
-                crossOrigin="anonymous"
                 className="w-full h-full object-cover transition-transform duration-[1500ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-110 opacity-60 group-hover:opacity-100"
               />
               

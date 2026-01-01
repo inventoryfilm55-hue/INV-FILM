@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -16,20 +16,27 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<'FILMS' | 'SITE_CONTENT'>('FILMS');
   
+  // Project State
   const [isAdding, setIsAdding] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
   const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('FILE');
   const [imageLoadError, setImageLoadError] = useState(false);
   
+  // Site Content State
+  const [tempContent, setTempContent] = useState<SiteContent>(siteContent);
+  
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
     if (sessionAuth === 'true') setIsAuthenticated(true);
-    // 어드민 진입 시 무조건 스크롤 최상단 고정
     window.scrollTo(0, 0);
   }, []);
+
+  useEffect(() => {
+    setTempContent(siteContent);
+  }, [siteContent]);
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,22 +56,25 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     }
   };
 
-  // Pure function without side effects (state updates during render)
+  // Improved G-Drive Image Resolver using the robust lh3 proxy
   const convertGDriveUrl = (url: string): string => {
     if (!url) return '';
     if (url.startsWith('data:')) return url;
-    const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing\/|uc\?.*?id=)([a-zA-Z0-9_-]{25,})/;
+    
+    // Regular expression to catch IDs from various G-Drive link formats
+    const regex = /(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/;
     const match = url.match(regex);
+    
     if (match && match[1]) {
-      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1920`;
+      // Use lh3.googleusercontent.com which is the most reliable way to bypass browser CORS/Referrer issues for <img> tags
+      return `https://lh3.googleusercontent.com/d/${match[1]}`;
     }
     return url;
   };
 
-  // G-Drive Link Verification (Non-render blocking)
   const isGDriveLink = (url: string | undefined) => {
     if (!url) return false;
-    return url.includes('drive.google.com');
+    return url.includes('drive.google.com') || url.includes('googleusercontent.com');
   };
 
   const getYouTubeEmbedUrl = (url: string) => {
@@ -82,7 +92,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     setProjectFormData({...projectFormData, videoUrl: cleanUrl});
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'thumbnail' | 'gallery') => {
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'thumbnail') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
@@ -149,6 +159,20 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     setProjectFormData({});
   };
 
+  const saveSiteContent = () => {
+    // Normalize images in site content using the robust resolver
+    const normalizedContent = {
+      ...tempContent,
+      about: {
+        ...tempContent.about,
+        img1: convertGDriveUrl(tempContent.about.img1),
+        img2: convertGDriveUrl(tempContent.about.img2)
+      }
+    };
+    onUpdateContent(normalizedContent);
+    alert('Site content updated successfully.');
+  };
+
   if (!isAuthenticated) {
     return (
       <div className="fixed inset-0 z-[500] bg-[#050505] flex items-center justify-center p-6">
@@ -203,6 +227,15 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
             {activeTab === 'SITE_CONTENT' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#84cc16] shadow-[0_0_15px_#84cc16]"></span>}
           </button>
         </div>
+        
+        {activeTab === 'SITE_CONTENT' && (
+          <button 
+            onClick={saveSiteContent}
+            className="px-12 py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center gap-3 shadow-[0_10px_30px_rgba(132,204,22,0.3)]"
+          >
+            <Save size={20} /> Publish All Changes
+          </button>
+        )}
       </div>
 
       {activeTab === 'FILMS' ? (
@@ -276,13 +309,13 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                               {isGDriveLink(projectFormData.thumbnail) && (
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30">
                                   <Globe size={12} className="animate-pulse" />
-                                  <span className="text-[8px] font-black tracking-widest uppercase">STABILIZED</span>
+                                  <span className="text-[8px] font-black tracking-widest uppercase">SECURED LINK</span>
                                 </div>
                               )}
                             </div>
                             <div className="p-4 bg-black/50 border border-white/5 rounded-sm text-[9px] text-neutral-500 uppercase leading-relaxed tracking-widest">
-                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 자동 보정 활성화</p>
-                               구글 드라이브 링크 입력 시 전용 썸네일 엔진으로 자동 변환됩니다. 공유 설정을 꼭 확인해 주세요.
+                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 다이렉트 엔진 활성화</p>
+                               lh3 서버를 경유하여 이미지를 직접 불러옵니다. 공유 설정을 "모든 사용자"로 변경해 주세요.
                             </div>
                           </div>
                         )}
@@ -327,7 +360,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                           onLoad={() => setImageLoadError(false)}
                           onError={() => setImageLoadError(true)}
                           referrerPolicy="no-referrer"
-                          crossOrigin="anonymous"
                           className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-0' : 'opacity-80 hover:opacity-100'}`} 
                           alt="Preview" 
                         />
@@ -336,9 +368,9 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                       {(!projectFormData.thumbnail || imageLoadError) && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black">
                           {imageLoadError ? <WifiOff size={40} className="text-red-500 mb-4" /> : <ImageIcon size={40} className="text-neutral-800 mb-4" />}
-                          <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Signal Blocked' : 'No Signal'}</h6>
+                          <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Link Error' : 'No Image'}</h6>
                           <p className="text-white/20 text-[8px] uppercase tracking-widest leading-relaxed">
-                            {imageLoadError ? '공유 설정 확인 요망' : '영상 프레임 대기 중'}
+                            {imageLoadError ? '드라이브 공유 설정이\n"모두"인지 확인하세요' : '영상 프레임 대기 중'}
                           </p>
                         </div>
                       )}
@@ -358,7 +390,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                     <button onClick={() => moveProject(index, 'down')} disabled={index === projects.length - 1} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronDown size={20} /></button>
                   </div>
                   <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-                    <img src={displayThumbnail} referrerPolicy="no-referrer" crossOrigin="anonymous" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
+                    <img src={displayThumbnail} referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
                   </div>
                   <div className="flex-grow text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
@@ -377,9 +409,110 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
           </div>
         </div>
       ) : (
-        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-10">
+        <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 pb-20">
+          {/* Directors Section Editor */}
+          <div className="bg-white/5 border border-white/10 rounded-sm p-10">
+            <h4 className="text-white font-logo font-black text-2xl mb-12 uppercase flex items-center gap-4">
+              <span className="w-8 h-[2px] bg-[#84cc16]"></span>
+              Directors View Editor
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">First Name</label>
+                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.directors.name} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, name: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Last Name</label>
+                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.directors.subName} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, subName: e.target.value}})} />
+              </div>
+              <div className="space-y-4 md:col-span-2">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Manifesto</label>
+                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.directors.manifesto} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, manifesto: e.target.value}})} />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Process Title</label>
+                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.directors.processTitle} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processTitle: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Process Description</label>
+                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.directors.processDesc} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processDesc: e.target.value}})} />
+              </div>
+
+              <div className="space-y-4 md:col-span-2">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Core Disciplines (Tags)</label>
+                <div className="flex flex-wrap gap-3 mb-4">
+                  {tempContent.directors.disciplines.map((d, i) => (
+                    <div key={i} className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-sm group">
+                      <span className="text-white text-xs font-bold uppercase tracking-widest">{d}</span>
+                      <button onClick={() => setTempContent({...tempContent, directors: {...tempContent.directors, disciplines: tempContent.directors.disciplines.filter((_, idx) => idx !== i)}})} className="text-neutral-500 hover:text-red-500 transition-colors"><MinusCircle size={14}/></button>
+                    </div>
+                  ))}
+                  <button 
+                    onClick={() => {
+                      const val = prompt('Enter new discipline:');
+                      if(val) setTempContent({...tempContent, directors: {...tempContent.directors, disciplines: [...tempContent.directors.disciplines, val]}});
+                    }}
+                    className="flex items-center gap-2 bg-[#84cc16]/10 border border-[#84cc16]/30 px-4 py-2 rounded-sm text-[#84cc16] hover:bg-[#84cc16] hover:text-black transition-all"
+                  >
+                    <PlusCircle size={14}/> <span className="text-[10px] font-black uppercase tracking-widest">Add New</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* About Section Editor */}
+          <div className="bg-white/5 border border-white/10 rounded-sm p-10">
+            <h4 className="text-white font-logo font-black text-2xl mb-12 uppercase flex items-center gap-4">
+              <span className="w-8 h-[2px] bg-[#84cc16]"></span>
+              About Us Editor
+            </h4>
+            
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
+              <div className="space-y-4 md:col-span-2">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Headline</label>
+                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none text-2xl font-bold" value={tempContent.about.headline} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, headline: e.target.value}})} />
+              </div>
+              
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description Part 1</label>
+                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.about.description1} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, description1: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description Part 2</label>
+                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.about.description2} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, description2: e.target.value}})} />
+              </div>
+
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Image 1 URL (Google Drive Supported)</label>
+                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.img1} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, img1: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Image 2 URL (Google Drive Supported)</label>
+                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.img2} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, img2: e.target.value}})} />
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:col-span-2">
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Philosophy</label>
+                  <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.philosophy} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, philosophy: e.target.value}})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Production Hub</label>
+                  <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.hub} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, hub: e.target.value}})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Innovation Label</label>
+                  <input className="w-full bg-black border border-white/10 p-5 text-[#84cc16] focus:border-[#84cc16] outline-none font-bold" value={tempContent.about.innovation} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, innovation: e.target.value}})} />
+                </div>
+              </div>
+            </div>
+          </div>
+          
           <div className="text-center pt-10 border-t border-white/5">
-             <p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 모든 데이터는 브라우저 저장소에 실시간 동기화됩니다.</p>
+             <p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 입력하신 정보는 상단의 Publish 버튼을 눌러야 최종 반영됩니다.</p>
           </div>
         </div>
       )}

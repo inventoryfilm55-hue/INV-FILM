@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -19,6 +19,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [isAdding, setIsAdding] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
+  const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('FILE');
   
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -55,12 +56,14 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     setProjectFormData({...projectFormData, videoUrl: cleanUrl});
   };
 
-  // Image to Base64 Converter
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'thumbnail' | 'gallery') => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
     const processFile = (file: File) => {
+      if (file.size > 2 * 1024 * 1024) {
+        alert(`${file.name}의 용량이 너무 큽니다. 2MB 이하의 이미지를 권장합니다.`);
+      }
       return new Promise<string>((resolve) => {
         const reader = new FileReader();
         reader.onloadend = () => resolve(reader.result as string);
@@ -69,12 +72,10 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     };
 
     if (type === 'thumbnail') {
-      // Fix: Cast files[0] to File to resolve TypeScript 'unknown' error (line 76)
       processFile(files[0] as File).then(base64 => {
         setProjectFormData(prev => ({ ...prev, thumbnail: base64 }));
       });
     } else {
-      // Fix: Cast each element to File to resolve TypeScript 'unknown' error in Array.from mapping (line 80)
       const promises = Array.from(files).map(file => processFile(file as File));
       Promise.all(promises).then(newImages => {
         setProjectFormData(prev => ({
@@ -105,6 +106,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const startEditing = (project: Project) => {
     setEditingProjectId(project.id);
     setProjectFormData(project);
+    setThumbMode(project.thumbnail?.startsWith('data:') ? 'FILE' : 'URL');
     setIsAdding(false);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -195,16 +197,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                        <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} placeholder="Client Name" />
                      </div>
                      
-                     {/* Improved Thumbnail Section with Upload */}
-                     <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Main Thumbnail</label>
-                       <div className="flex gap-2">
-                         <input className="flex-grow bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none text-xs" value={projectFormData.thumbnail || ''} onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} placeholder="URL or Upload File" />
-                         <input type="file" ref={thumbnailInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'thumbnail')} />
-                         <button onClick={() => thumbnailInputRef.current?.click()} className="px-4 bg-white/10 text-white hover:bg-white/20 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"><Upload size={14}/> Upload</button>
-                       </div>
-                     </div>
-
                      <div className="space-y-2">
                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest flex items-center justify-between">
                          YouTube Link
@@ -232,16 +224,66 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                         </select>
                      </div>
 
-                     <div className="space-y-2">
+                     <div className="space-y-2 md:col-span-2">
+                        <div className="flex items-center justify-between mb-2">
+                          <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Main Thumbnail</label>
+                          <div className="flex gap-2">
+                            <button onClick={() => setThumbMode('FILE')} className={`px-3 py-1 text-[8px] font-black tracking-widest uppercase rounded-sm border transition-all ${thumbMode === 'FILE' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-transparent text-neutral-500 border-white/10'}`}><Upload size={10} className="inline mr-1" /> File</button>
+                            <button onClick={() => setThumbMode('URL')} className={`px-3 py-1 text-[8px] font-black tracking-widest uppercase rounded-sm border transition-all ${thumbMode === 'URL' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-transparent text-neutral-500 border-white/10'}`}><LinkIcon size={10} className="inline mr-1" /> URL</button>
+                          </div>
+                        </div>
+
+                        {thumbMode === 'FILE' ? (
+                          <div 
+                            onClick={() => thumbnailInputRef.current?.click()}
+                            className={`w-full h-48 border-2 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden relative
+                              ${projectFormData.thumbnail ? 'border-[#84cc16]/50 bg-black' : 'border-white/10 bg-black/50 hover:border-[#84cc16]/50 hover:bg-[#84cc16]/5'}
+                            `}
+                          >
+                            <input type="file" ref={thumbnailInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'thumbnail')} />
+                            
+                            {projectFormData.thumbnail && projectFormData.thumbnail.startsWith('data:') ? (
+                              <>
+                                <img src={projectFormData.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-40" alt="Preview" />
+                                <div className="relative z-10 flex flex-col items-center gap-2">
+                                  <RefreshCw size={24} className="text-[#84cc16]" />
+                                  <span className="text-[10px] text-[#84cc16] font-black tracking-widest uppercase">Change File</span>
+                                </div>
+                              </>
+                            ) : (
+                              <>
+                                <Upload size={32} className="text-neutral-700" />
+                                <div className="text-center">
+                                  <p className="text-[11px] text-white font-bold tracking-widest uppercase mb-1">Select Local File</p>
+                                  <p className="text-[9px] text-neutral-500 uppercase tracking-widest">Auto-converted to Data URL</p>
+                                </div>
+                              </>
+                            )}
+                          </div>
+                        ) : (
+                          <div className="space-y-4">
+                            <input 
+                              className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none text-sm placeholder:text-neutral-700" 
+                              value={projectFormData.thumbnail && !projectFormData.thumbnail.startsWith('data:') ? projectFormData.thumbnail : ''} 
+                              onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} 
+                              placeholder="https://example.com/image.jpg" 
+                            />
+                            <div className="p-4 bg-white/5 border border-white/10 text-[9px] text-neutral-500 font-bold tracking-widest uppercase">
+                              Tip: You can use Imgur or Postimages to host your images and paste the direct link here.
+                            </div>
+                          </div>
+                        )}
+                     </div>
+
+                     <div className="space-y-2 md:col-span-2">
                         <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Layout Ratio</label>
                         <div className="flex gap-4">
-                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '16:9'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '16:9' || !projectFormData.aspectRatio ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Monitor size={16} /> 16:9</button>
-                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '9:16'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '9:16' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Smartphone size={16} /> 9:16</button>
+                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '16:9'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '16:9' || !projectFormData.aspectRatio ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Monitor size={16} /> Landscape (16:9)</button>
+                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '9:16'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '9:16' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Smartphone size={16} /> Portrait (9:16)</button>
                         </div>
                      </div>
                    </div>
 
-                   {/* Gallery Management Section */}
                    <div className="mt-10 pt-10 border-t border-white/5">
                       <div className="flex items-center justify-between mb-6">
                         <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Visual Stills (Gallery)</label>
@@ -276,13 +318,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                         <div className="px-4 py-2 border border-black text-black text-[8px] font-black uppercase">Explore Film</div>
                       </div>
                     </div>
-                    
-                    {!isValidYoutube && projectFormData.videoUrl && (
-                      <div className="mt-8 p-4 bg-red-500/10 border border-red-500/20 rounded-sm flex items-start gap-3 text-left">
-                        <AlertCircle size={14} className="text-red-500 shrink-0 mt-0.5" />
-                        <p className="text-[9px] text-red-500 font-bold leading-relaxed uppercase">Notice: Invalid video format. Please ensure you use a direct YouTube URL.</p>
-                      </div>
-                    )}
                  </div>
                </div>
              </div>

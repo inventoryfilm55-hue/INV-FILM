@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -20,16 +20,14 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
   const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('FILE');
-  const [isGDriveConverted, setIsGDriveConverted] = useState(false);
   const [imageLoadError, setImageLoadError] = useState(false);
   
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
-  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
     if (sessionAuth === 'true') setIsAuthenticated(true);
-    // 어드민 진입 시 강제 최상단 스크롤
+    // 어드민 진입 시 무조건 스크롤 최상단 고정
     window.scrollTo(0, 0);
   }, []);
 
@@ -51,16 +49,22 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     }
   };
 
+  // Pure function without side effects (state updates during render)
   const convertGDriveUrl = (url: string): string => {
     if (!url) return '';
     if (url.startsWith('data:')) return url;
     const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing\/|uc\?.*?id=)([a-zA-Z0-9_-]{25,})/;
     const match = url.match(regex);
     if (match && match[1]) {
-      setIsGDriveConverted(true);
       return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1920`;
     }
     return url;
+  };
+
+  // G-Drive Link Verification (Non-render blocking)
+  const isGDriveLink = (url: string | undefined) => {
+    if (!url) return false;
+    return url.includes('drive.google.com');
   };
 
   const getYouTubeEmbedUrl = (url: string) => {
@@ -97,14 +101,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
       processFile(files[0] as File).then(base64 => {
         setProjectFormData(prev => ({ ...prev, thumbnail: base64 }));
         setImageLoadError(false);
-      });
-    } else {
-      const promises = Array.from(files).map(file => processFile(file as File));
-      Promise.all(promises).then(newImages => {
-        setProjectFormData(prev => ({
-          ...prev,
-          gallery: [...(prev.gallery || []), ...newImages]
-        }));
       });
     }
   };
@@ -151,18 +147,17 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
       setIsAdding(false);
     }
     setProjectFormData({});
-    setIsGDriveConverted(false);
   };
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 animate-fade-up">
-        <div className={`w-full max-w-md bg-white/5 border p-12 rounded-sm text-center shadow-2xl relative transition-all duration-300 ${authError ? 'border-red-500 animate-shake' : 'border-white/10'}`}>
+      <div className="fixed inset-0 z-[500] bg-[#050505] flex items-center justify-center p-6">
+        <div className={`w-full max-w-md bg-neutral-900/50 border p-12 rounded-sm text-center shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative transition-all duration-300 ${authError ? 'border-red-500 animate-shake' : 'border-white/10'}`}>
           <div className={`mb-10 inline-flex items-center justify-center w-20 h-20 rounded-full bg-black border text-[#84cc16] transition-colors ${authError ? 'border-red-500 text-red-500' : 'border-white/10'}`}>
             <Lock size={32} />
           </div>
           <h1 className="text-3xl font-logo font-black text-white tracking-tighter uppercase mb-2">Admin Access</h1>
-          <p className="text-[10px] text-neutral-500 tracking-[0.3em] uppercase mb-10 font-bold">Secure Environment</p>
+          <p className="text-[10px] text-neutral-500 tracking-[0.3em] uppercase mb-10 font-bold">INV-FILM SECURE SYSTEM</p>
           
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="relative">
@@ -183,6 +178,13 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
               {authError ? 'Retry' : 'Authorize'} <ArrowRight size={18} />
             </button>
           </form>
+
+          <button 
+            onClick={() => window.location.href = '/'}
+            className="mt-12 text-[10px] text-neutral-600 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2 mx-auto transition-colors font-bold"
+          >
+            <Home size={12} /> Exit to Home
+          </button>
         </div>
       </div>
     );
@@ -208,7 +210,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
           <div className="flex justify-between items-center mb-10">
             <h3 className="text-xl font-logo font-bold text-white uppercase tracking-wider">Project Management</h3>
             <button 
-              onClick={() => { setIsAdding(!isAdding); setEditingProjectId(null); setProjectFormData({}); setImageLoadError(false); setIsGDriveConverted(false); }} 
+              onClick={() => { setIsAdding(!isAdding); setEditingProjectId(null); setProjectFormData({}); setImageLoadError(false); }} 
               className="px-8 py-4 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all"
             >
               {isAdding ? 'Close Form' : '+ New Project'}
@@ -266,14 +268,12 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                                 className={`w-full bg-black border p-5 pr-40 text-white focus:border-[#84cc16] outline-none text-sm placeholder:text-neutral-700 transition-colors ${imageLoadError ? 'border-red-500/50' : 'border-white/10'}`}
                                 value={projectFormData.thumbnail && !projectFormData.thumbnail.startsWith('data:') ? projectFormData.thumbnail : ''} 
                                 onChange={e => {
-                                  const val = e.target.value;
-                                  const converted = convertGDriveUrl(val);
-                                  setProjectFormData({...projectFormData, thumbnail: converted});
+                                  setProjectFormData({...projectFormData, thumbnail: e.target.value});
                                   setImageLoadError(false);
                                 }} 
                                 placeholder="Paste Google Drive link here" 
                               />
-                              {isGDriveConverted && (
+                              {isGDriveLink(projectFormData.thumbnail) && (
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30">
                                   <Globe size={12} className="animate-pulse" />
                                   <span className="text-[8px] font-black tracking-widest uppercase">STABILIZED</span>
@@ -281,8 +281,8 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                               )}
                             </div>
                             <div className="p-4 bg-black/50 border border-white/5 rounded-sm text-[9px] text-neutral-500 uppercase leading-relaxed tracking-widest">
-                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 썸네일 엔진 적용</p>
-                               외부 링크 차단을 방지하기 위해 전용 썸네일 엔진 주소를 사용합니다. [공유 설정]이 <strong className="text-[#84cc16]">전체 공개</strong>인지 꼭 확인해 주세요.
+                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 자동 보정 활성화</p>
+                               구글 드라이브 링크 입력 시 전용 썸네일 엔진으로 자동 변환됩니다. 공유 설정을 꼭 확인해 주세요.
                             </div>
                           </div>
                         )}
@@ -323,14 +323,13 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                     <div className={`relative bg-neutral-900 border shadow-2xl overflow-hidden transition-all duration-700 ${imageLoadError ? 'border-red-500/40' : 'border-white/10'} ${projectFormData.aspectRatio === '9:16' ? 'w-[180px] aspect-[9/16]' : 'w-full aspect-video'}`}>
                       {projectFormData.thumbnail ? (
                         <img 
-                          src={projectFormData.thumbnail} 
-                          key={projectFormData.thumbnail}
+                          src={convertGDriveUrl(projectFormData.thumbnail)} 
                           onLoad={() => setImageLoadError(false)}
                           onError={() => setImageLoadError(true)}
                           referrerPolicy="no-referrer"
                           crossOrigin="anonymous"
                           className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-0' : 'opacity-80 hover:opacity-100'}`} 
-                          alt="Monitor" 
+                          alt="Preview" 
                         />
                       ) : null}
                       
@@ -339,7 +338,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                           {imageLoadError ? <WifiOff size={40} className="text-red-500 mb-4" /> : <ImageIcon size={40} className="text-neutral-800 mb-4" />}
                           <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Signal Blocked' : 'No Signal'}</h6>
                           <p className="text-white/20 text-[8px] uppercase tracking-widest leading-relaxed">
-                            {imageLoadError ? '구글 드라이브 공유 설정을\n"모든 사용자"로 변경하세요' : '영상 프레임 대기 중'}
+                            {imageLoadError ? '공유 설정 확인 요망' : '영상 프레임 대기 중'}
                           </p>
                         </div>
                       )}
@@ -379,7 +378,9 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
         </div>
       ) : (
         <div className="space-y-16 animate-in fade-in slide-in-from-bottom-10">
-          <div className="text-center pt-10 border-t border-white/5"><p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 모든 데이터는 입력 즉시 브라우저 저장소에 동기화됩니다.</p></div>
+          <div className="text-center pt-10 border-t border-white/5">
+             <p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 모든 데이터는 브라우저 저장소에 실시간 동기화됩니다.</p>
+          </div>
         </div>
       )}
     </div>

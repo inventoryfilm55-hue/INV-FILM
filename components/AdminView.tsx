@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -20,6 +20,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
   const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('FILE');
+  const [isGDriveConverted, setIsGDriveConverted] = useState(false);
   
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
   const galleryInputRef = useRef<HTMLInputElement>(null);
@@ -28,6 +29,19 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
     if (sessionAuth === 'true') setIsAuthenticated(true);
   }, []);
+
+  // Google Drive Link Converter
+  const convertGDriveUrl = (url: string): string => {
+    if (!url) return '';
+    const regex = /\/file\/d\/([^/]+)\//;
+    const match = url.match(regex);
+    if (match && match[1]) {
+      setIsGDriveConverted(true);
+      setTimeout(() => setIsGDriveConverted(false), 3000);
+      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+    }
+    return url;
+  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
@@ -262,14 +276,23 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                           </div>
                         ) : (
                           <div className="space-y-4">
-                            <input 
-                              className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none text-sm placeholder:text-neutral-700" 
-                              value={projectFormData.thumbnail && !projectFormData.thumbnail.startsWith('data:') ? projectFormData.thumbnail : ''} 
-                              onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} 
-                              placeholder="https://example.com/image.jpg" 
-                            />
-                            <div className="p-4 bg-white/5 border border-white/10 text-[9px] text-neutral-500 font-bold tracking-widest uppercase">
-                              Tip: You can use Imgur or Postimages to host your images and paste the direct link here.
+                            <div className="relative">
+                              <input 
+                                className="w-full bg-black border border-white/10 p-5 pr-32 text-white focus:border-[#84cc16] outline-none text-sm placeholder:text-neutral-700" 
+                                value={projectFormData.thumbnail && !projectFormData.thumbnail.startsWith('data:') ? projectFormData.thumbnail : ''} 
+                                onChange={e => setProjectFormData({...projectFormData, thumbnail: convertGDriveUrl(e.target.value)})} 
+                                placeholder="Paste Image URL or G-Drive Link" 
+                              />
+                              {isGDriveConverted && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30 animate-fade-in">
+                                  <Globe size={12} className="animate-pulse" />
+                                  <span className="text-[8px] font-black tracking-widest uppercase">G-DRIVE CONVERTED</span>
+                                </div>
+                              )}
+                            </div>
+                            <div className="p-4 bg-white/5 border border-white/10 text-[9px] text-neutral-500 font-bold tracking-widest uppercase flex items-center gap-3">
+                              <AlertCircle size={14} className="text-[#84cc16]" />
+                              <span>Google Drive links are now automatically converted to direct images. Just paste the share link!</span>
                             </div>
                           </div>
                         )}

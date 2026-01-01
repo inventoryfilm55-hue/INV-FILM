@@ -25,16 +25,21 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   };
 
   return (
-    <div className="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl overflow-y-auto animate-in fade-in duration-500">
-      <div className="max-w-[1400px] mx-auto min-h-screen py-10 px-6 lg:px-20 relative">
+    <div className="fixed inset-0 z-[200] bg-black/98 backdrop-blur-2xl overflow-y-auto animate-in fade-in duration-700">
+      <div className="max-w-[1600px] mx-auto min-h-screen py-20 px-6 lg:px-20 relative flex flex-col items-center">
+        
+        {/* Close Button */}
         <button 
           onClick={onClose}
-          className="fixed top-8 right-8 text-neutral-500 hover:text-white transition-colors z-[210]"
+          className="fixed top-10 right-10 text-white/30 hover:text-[#84cc16] transition-all z-[210] p-2 hover:rotate-90 duration-300"
         >
-          <X size={32} />
+          <X size={40} strokeWidth={1.5} />
         </button>
 
-        <div className={`w-full bg-neutral-900 mb-12 shadow-2xl overflow-hidden rounded-sm relative ${project.aspectRatio === '9:16' ? 'max-w-[450px] mx-auto aspect-[9/16]' : 'aspect-video'}`}>
+        {/* Video Player - Size increased by 1.5x (9:16 now 680px max) */}
+        <div className={`w-full bg-neutral-900 mb-20 shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden rounded-sm relative transition-all duration-700
+          ${project.aspectRatio === '9:16' ? 'max-w-[680px] aspect-[9/16]' : 'max-w-[1500px] aspect-video'}
+        `}>
           <iframe
             src={getForcedEmbedUrl(project.videoUrl)}
             className="absolute inset-0 w-full h-full border-none"
@@ -44,60 +49,62 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           ></iframe>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
-          <div className="lg:col-span-1 space-y-12">
-            <div>
-              <h2 className="font-logo text-4xl font-bold text-white mb-4 tracking-tighter uppercase">{project.title}</h2>
-              <div className="w-20 h-[2px] bg-[#84cc16] mb-8"></div>
-              <p className="text-neutral-400 leading-relaxed text-sm">
-                {project.description || "Cinematic branded content produced by INV-FILM."}
-              </p>
+        {/* Project Content - Single Column Stacked Layout */}
+        <div className="max-w-[1000px] w-full space-y-20 animate-fade-up">
+          
+          {/* Main Title & Description */}
+          <div className="text-center space-y-10">
+            <div className="space-y-4">
+              <p className="text-[#84cc16] text-[12px] font-black tracking-[0.6em] uppercase">Inventory Archive</p>
+              <h2 className="font-logo text-6xl md:text-8xl font-black text-white tracking-tighter uppercase leading-[0.85]">
+                {project.title}
+              </h2>
             </div>
+            
+            <div className="w-24 h-[1px] bg-white/10 mx-auto"></div>
+            
+            <p className="text-neutral-400 leading-relaxed text-lg font-light max-w-2xl mx-auto">
+              {project.description || "A cinematic journey produced by INV-FILM. Every frame is an inventory of human emotion and visual precision."}
+            </p>
+          </div>
 
-            <div className="space-y-6">
-              <div className="flex items-center gap-4 group">
-                <Briefcase size={16} className="text-[#84cc16]" />
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Client</p>
-                  <p className="text-white font-logo tracking-widest text-lg group-hover:text-[#84cc16] transition-colors">{project.client}</p>
-                </div>
+          {/* Metadata Grid - Balanced Horizontal Flow */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-12 py-16 border-y border-white/5">
+            <div className="flex flex-col items-center gap-4 text-center group">
+              <Briefcase size={20} className="text-[#84cc16]/50 group-hover:text-[#84cc16] transition-colors" />
+              <div>
+                <p className="text-[10px] text-neutral-600 uppercase tracking-widest font-black mb-1">Client Entity</p>
+                <p className="text-white font-logo tracking-[0.2em] text-xl uppercase">{project.client}</p>
               </div>
-              <div className="flex items-center gap-4 group">
-                <User size={16} className="text-[#84cc16]" />
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Director</p>
-                  <p className="text-white font-logo tracking-widest text-lg group-hover:text-[#84cc16] transition-colors">{project.director}</p>
-                </div>
+            </div>
+            
+            <div className="flex flex-col items-center gap-4 text-center group">
+              <User size={20} className="text-[#84cc16]/50 group-hover:text-[#84cc16] transition-colors" />
+              <div>
+                <p className="text-[10px] text-neutral-600 uppercase tracking-widest font-black mb-1">Direction</p>
+                <p className="text-white font-logo tracking-[0.2em] text-xl uppercase">{project.director}</p>
               </div>
-              <div className="flex items-center gap-4 group">
-                <Calendar size={16} className="text-[#84cc16]" />
-                <div>
-                  <p className="text-[10px] text-neutral-500 uppercase tracking-widest">Year</p>
-                  <p className="text-white font-logo tracking-widest text-lg group-hover:text-[#84cc16] transition-colors">{project.year}</p>
-                </div>
+            </div>
+            
+            <div className="flex flex-col items-center gap-4 text-center group">
+              <Calendar size={20} className="text-[#84cc16]/50 group-hover:text-[#84cc16] transition-colors" />
+              <div>
+                <p className="text-[10px] text-neutral-600 uppercase tracking-widest font-black mb-1">Production Year</p>
+                <p className="text-white font-logo tracking-[0.2em] text-xl uppercase">{project.year}</p>
               </div>
             </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <h3 className="font-logo text-[10px] uppercase tracking-[0.3em] text-neutral-500 mb-8 font-bold">Visual Stills</h3>
-            <div className="columns-2 md:columns-3 gap-4 space-y-4">
-              {project.gallery && project.gallery.length > 0 ? project.gallery.map((img, i) => (
-                <div key={i} className="break-inside-avoid overflow-hidden rounded-sm bg-neutral-900 group">
-                  <img
-                    src={img}
-                    alt={`Still ${i}`}
-                    referrerPolicy="no-referrer"
-                    className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
-                  />
-                </div>
-              )) : (
-                <div className="p-20 border border-white/5 text-neutral-800 text-center uppercase text-[10px] font-black tracking-widest">
-                  No additional stills available
-                </div>
-              )}
-            </div>
+          {/* Footer of Modal */}
+          <div className="pt-20 pb-40 text-center">
+            <button 
+              onClick={onClose}
+              className="px-16 py-6 border border-white/10 text-white/40 hover:text-white hover:border-white transition-all font-logo font-black tracking-[0.4em] uppercase text-xs"
+            >
+              Return to Inventory
+            </button>
           </div>
+
         </div>
       </div>
     </div>

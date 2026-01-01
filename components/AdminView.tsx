@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect } from 'react';
 import { Project, Category, AspectRatio } from '../types';
-import { Plus, Trash2, List, FileVideo, Image as ImageIcon, Lock, ShieldCheck, ArrowRight } from 'lucide-react';
+import { Plus, Trash2, List, FileVideo, Image as ImageIcon, Lock, ShieldCheck, ArrowRight, GripVertical, Monitor, Smartphone } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -13,6 +13,8 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState(false);
   const [isAdding, setIsAdding] = useState(false);
+  const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
+  
   const [formData, setFormData] = useState<Partial<Project>>({
     category: 'BRANDED CONTENT',
     aspectRatio: '16:9',
@@ -27,8 +29,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    // Default secret passcode - in a real app this would be an env variable or server-side check
-    if (passcode === 'INV2024') { 
+    if (passcode === '292513QQWW') { 
       setIsAuthenticated(true);
       sessionStorage.setItem('inv_admin_auth', 'true');
       setAuthError(false);
@@ -57,7 +58,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
       aspectRatio: formData.aspectRatio as AspectRatio
     };
 
-    onUpdateProjects([...projects, newProject]);
+    onUpdateProjects([newProject, ...projects]);
     setIsAdding(false);
     setFormData({ category: 'BRANDED CONTENT', aspectRatio: '16:9', gallery: [] });
   };
@@ -68,21 +69,38 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
     }
   };
 
+  // --- Drag and Drop Logic ---
+  const handleDragStart = (index: number) => {
+    setDraggedItemIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedItemIndex === null || draggedItemIndex === index) return;
+
+    const newProjects = [...projects];
+    const item = newProjects.splice(draggedItemIndex, 1)[0];
+    newProjects.splice(index, 0, item);
+    
+    setDraggedItemIndex(index);
+    onUpdateProjects(newProjects);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedItemIndex(null);
+  };
+
   // --- Authentication Gate UI ---
   if (!isAuthenticated) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 animate-fade-up">
         <div className="w-full max-w-md bg-white/5 backdrop-blur-3xl border border-white/10 p-12 rounded-sm text-center shadow-2xl relative overflow-hidden">
-          {/* Decorative background element */}
           <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#84cc16]/10 rounded-full blur-3xl"></div>
-          
           <div className="mb-10 inline-flex items-center justify-center w-20 h-20 rounded-full bg-black border border-white/10 text-[#84cc16] shadow-[0_0_30px_rgba(132,204,22,0.1)]">
             <Lock size={32} className={authError ? 'animate-shake text-red-500' : ''} />
           </div>
-          
           <h2 className="text-[10px] font-bold tracking-[0.6em] uppercase text-white/40 mb-2">Security Protocol</h2>
           <h1 className="text-3xl font-logo font-black text-white tracking-tighter uppercase mb-10">Admin Access</h1>
-          
           <form onSubmit={handleLogin} className="space-y-6">
             <div className="relative group">
               <input 
@@ -95,7 +113,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
               />
               {authError && <p className="text-[9px] text-red-500 font-bold tracking-widest uppercase mt-3">Invalid Access Key</p>}
             </div>
-            
             <button 
               type="submit"
               className="w-full py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-3"
@@ -103,12 +120,8 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
               Authorize <ArrowRight size={18} />
             </button>
           </form>
-          
-          <p className="mt-12 text-[9px] text-white/20 font-bold tracking-widest uppercase">
-            Restricted to INV-FILM Directorship
-          </p>
+          <p className="mt-12 text-[9px] text-white/20 font-bold tracking-widest uppercase">Restricted to INV-FILM Directorship</p>
         </div>
-        
         <style>{`
           @keyframes shake {
             0%, 100% { transform: translateX(0); }
@@ -121,7 +134,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
     );
   }
 
-  // --- Authenticated Dashboard UI ---
   return (
     <div className="max-w-[1800px] mx-auto px-6 md:px-12 py-32 animate-fade-up">
       <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
@@ -146,7 +158,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
           </button>
           <button 
             onClick={() => setIsAdding(!isAdding)}
-            className="px-12 py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center gap-3 shadow-[0_0_30px_rgba(132,204,22,0.2)]"
+            className="px-12 py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:brightness-110 transition-all flex items-center gap-3 shadow-[0_0_30px_rgba(132,204,22,0.3)]"
           >
             {isAdding ? <List size={20} /> : <Plus size={20} />}
             {isAdding ? 'View List' : 'Add New Film'}
@@ -202,14 +214,22 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
                 </div>
                 <div className="space-y-3">
                   <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Aspect Ratio</label>
-                  <select 
-                    className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none transition-colors appearance-none"
-                    value={formData.aspectRatio}
-                    onChange={e => setFormData({...formData, aspectRatio: e.target.value as AspectRatio})}
-                  >
-                    <option value="16:9">Landscape (16:9)</option>
-                    <option value="9:16">Portrait (9:16)</option>
-                  </select>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, aspectRatio: '16:9'})}
+                      className={`flex items-center justify-center gap-2 py-4 border text-[10px] font-bold tracking-widest transition-all ${formData.aspectRatio === '16:9' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-black text-white/40 border-white/10 hover:border-white/30'}`}
+                    >
+                      <Monitor size={14} /> 16:9
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({...formData, aspectRatio: '9:16'})}
+                      className={`flex items-center justify-center gap-2 py-4 border text-[10px] font-bold tracking-widest transition-all ${formData.aspectRatio === '9:16' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-black text-white/40 border-white/10 hover:border-white/30'}`}
+                    >
+                      <Smartphone size={14} /> 9:16
+                    </button>
+                  </div>
                 </div>
               </div>
 
@@ -286,49 +306,68 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
                   </p>
                 </div>
               </div>
-              <div className="p-8 border border-white/5 bg-white/5 italic text-white/40 text-sm leading-relaxed">
-                "Adding a new project will instantly update the public 'Work' grid and preserve the data in your browser's local cache."
-              </div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="space-y-6">
-          <div className="grid grid-cols-12 gap-4 px-6 py-4 text-[10px] font-bold tracking-[0.4em] uppercase text-white/20 border-b border-white/5">
-            <div className="col-span-5 lg:col-span-6">Project Details</div>
-            <div className="col-span-3 lg:col-span-2 text-center">Category</div>
-            <div className="col-span-2 text-center">Year</div>
-            <div className="col-span-2 lg:col-span-2 text-right">Actions</div>
+        <div className="space-y-4">
+          <div className="grid grid-cols-12 gap-4 px-12 py-4 text-[10px] font-bold tracking-[0.4em] uppercase text-white/20 border-b border-white/5">
+            <div className="col-span-1">Order</div>
+            <div className="col-span-4 lg:col-span-5">Project Details</div>
+            <div className="col-span-2 text-center">Ratio</div>
+            <div className="col-span-2 text-center">Category</div>
+            <div className="col-span-1 text-center">Year</div>
+            <div className="col-span-2 lg:col-span-1 text-right">Actions</div>
           </div>
-          {projects.map(project => (
-            <div key={project.id} className="grid grid-cols-12 gap-4 px-6 py-6 items-center bg-white/5 hover:bg-white/10 transition-colors group border border-white/5">
-              <div className="col-span-5 lg:col-span-6 flex items-center gap-6">
-                <div className="w-20 h-12 bg-neutral-800 border border-white/10 overflow-hidden hidden md:block">
-                  <img src={project.thumbnail} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+          
+          <div className="space-y-2">
+            {projects.map((project, index) => (
+              <div 
+                key={project.id} 
+                draggable
+                onDragStart={() => handleDragStart(index)}
+                onDragOver={(e) => handleDragOver(e, index)}
+                onDragEnd={handleDragEnd}
+                className={`grid grid-cols-12 gap-4 px-6 py-6 items-center bg-white/5 hover:bg-white/10 transition-all group border border-white/5 cursor-move ${draggedItemIndex === index ? 'opacity-20 scale-95' : 'opacity-100'}`}
+              >
+                <div className="col-span-1 flex items-center justify-center text-white/10 group-hover:text-[#84cc16] transition-colors">
+                  <GripVertical size={20} />
                 </div>
-                <div>
-                  <h4 className="text-white font-logo font-bold text-sm lg:text-lg tracking-tight uppercase leading-none mb-1">{project.title}</h4>
-                  <p className="text-white/30 text-[9px] font-bold tracking-widest uppercase">{project.client}</p>
+                <div className="col-span-4 lg:col-span-5 flex items-center gap-6">
+                  <div className={`h-12 bg-neutral-800 border border-white/10 overflow-hidden hidden md:block ${project.aspectRatio === '9:16' ? 'w-8' : 'w-20'}`}>
+                    <img src={project.thumbnail} className="w-full h-full object-cover grayscale group-hover:grayscale-0 transition-all" />
+                  </div>
+                  <div>
+                    <h4 className="text-white font-logo font-bold text-sm lg:text-lg tracking-tight uppercase leading-none mb-1">{project.title}</h4>
+                    <p className="text-white/30 text-[9px] font-bold tracking-widest uppercase">{project.client}</p>
+                  </div>
+                </div>
+                <div className="col-span-2 flex justify-center">
+                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-[9px] font-black tracking-widest uppercase border ${project.aspectRatio === '9:16' ? 'text-[#84cc16] border-[#84cc16]/30 bg-[#84cc16]/5' : 'text-blue-400 border-blue-400/30 bg-blue-400/5'}`}>
+                    {project.aspectRatio === '9:16' ? <Smartphone size={12} /> : <Monitor size={12} />}
+                    {project.aspectRatio}
+                  </div>
+                </div>
+                <div className="col-span-2 text-center">
+                  <span className="text-[10px] font-bold tracking-widest text-white/40 uppercase bg-black/40 px-3 py-1 border border-white/5">
+                    {project.category}
+                  </span>
+                </div>
+                <div className="col-span-1 text-center text-white/30 font-bold text-xs tracking-widest">
+                  {project.year}
+                </div>
+                <div className="col-span-2 lg:col-span-1 text-right">
+                  <button 
+                    onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }}
+                    className="p-3 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-full"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
-              <div className="col-span-3 lg:col-span-2 text-center">
-                <span className="text-[10px] font-bold tracking-widest text-white/40 uppercase bg-black/40 px-3 py-1 border border-white/5">
-                  {project.category}
-                </span>
-              </div>
-              <div className="col-span-2 text-center text-white/30 font-bold text-xs tracking-widest">
-                {project.year}
-              </div>
-              <div className="col-span-2 lg:col-span-2 text-right">
-                <button 
-                  onClick={() => handleDeleteProject(project.id)}
-                  className="p-3 text-white/20 hover:text-red-500 hover:bg-red-500/10 transition-all rounded-full"
-                >
-                  <Trash2 size={18} />
-                </button>
-              </div>
-            </div>
-          ))}
+            ))}
+          </div>
+
           {projects.length === 0 && (
             <div className="py-20 text-center border border-dashed border-white/10">
               <p className="text-white/20 font-logo font-bold tracking-widest uppercase">No cinematic records found.</p>

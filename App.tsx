@@ -24,15 +24,37 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
+  // Helper to normalize any YT link to embed format
+  const normalizeYT = (url: string) => {
+    if (!url) return '';
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
+  };
+
   useEffect(() => {
     // Initial data load
     const savedProjects = localStorage.getItem('inv_film_projects');
+    let loadedProjects: Project[] = [];
+    
     if (savedProjects) {
-      try { setProjects(JSON.parse(savedProjects)); } catch (e) { setProjects(INITIAL_PROJECTS); }
+      try { 
+        loadedProjects = JSON.parse(savedProjects);
+      } catch (e) { 
+        loadedProjects = INITIAL_PROJECTS; 
+      }
     } else {
-      setProjects(INITIAL_PROJECTS);
-      localStorage.setItem('inv_film_projects', JSON.stringify(INITIAL_PROJECTS));
+      loadedProjects = INITIAL_PROJECTS;
     }
+
+    // Auto-fix existing broken URLs in projects
+    const fixedProjects = loadedProjects.map(p => ({
+      ...p,
+      videoUrl: normalizeYT(p.videoUrl)
+    }));
+
+    setProjects(fixedProjects);
+    localStorage.setItem('inv_film_projects', JSON.stringify(fixedProjects));
 
     const savedContent = localStorage.getItem('inv_site_content');
     if (savedContent) {
@@ -55,8 +77,10 @@ const App: React.FC = () => {
   }, []);
 
   const handleUpdateProjects = (newProjects: Project[]) => {
-    setProjects(newProjects);
-    localStorage.setItem('inv_film_projects', JSON.stringify(newProjects));
+    // Also normalize on save
+    const normalized = newProjects.map(p => ({ ...p, videoUrl: normalizeYT(p.videoUrl) }));
+    setProjects(normalized);
+    localStorage.setItem('inv_film_projects', JSON.stringify(normalized));
   };
 
   const handleUpdateContent = (newContent: SiteContent) => {

@@ -11,14 +11,23 @@ interface ProjectModalProps {
 const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   if (!project) return null;
 
-  // Build a safe embed URL
-  const getSafeVideoUrl = (url: string) => {
+  // 100% Reliability: Extract only the ID and reconstruct the URL
+  const getForcedEmbedUrl = (url: string) => {
     if (!url) return '';
-    // Prevent double parameters and ensure correct separator
-    const separator = url.includes('?') ? '&' : '?';
-    const origin = window.location.origin;
-    // Add common YouTube params for cleaner playback and better compatibility
-    return `${url}${separator}autoplay=1&rel=0&modestbranding=1&origin=${origin}`;
+    
+    // Regular expression to extract the 11-character YouTube video ID
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
+    const match = url.match(regExp);
+    const videoId = (match && match[2].length === 11) ? match[2] : null;
+
+    if (videoId) {
+      const origin = window.location.origin;
+      // Reconstruct using the official embed format only
+      return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(origin)}`;
+    }
+    
+    // Fallback if regex fails (should not happen with standard YT links)
+    return url;
   };
 
   return (
@@ -34,9 +43,9 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
         {/* Video Player Section */}
         <div className={`w-full bg-neutral-900 mb-12 shadow-2xl overflow-hidden rounded-sm relative ${project.aspectRatio === '9:16' ? 'max-w-[450px] mx-auto aspect-[9/16]' : 'aspect-video'}`}>
           <iframe
-            src={getSafeVideoUrl(project.videoUrl)}
+            src={getForcedEmbedUrl(project.videoUrl)}
             className="absolute inset-0 w-full h-full border-none"
-            allow="autoplay; encrypted-media; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
             allowFullScreen
             title={project.title}
           ></iframe>

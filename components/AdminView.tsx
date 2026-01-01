@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -31,17 +31,15 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     if (sessionAuth === 'true') setIsAuthenticated(true);
   }, []);
 
-  // Robust Google Drive Link Converter
+  // Ultimate Google Drive ID Extractor & Converter
   const convertGDriveUrl = (url: string): string => {
     if (!url) return '';
-    // Enhanced regex to catch various G-Drive formats including file/d/ID/view, open?id=ID, etc.
-    const regex = /(?:\/file\/d\/|id=)([a-zA-Z0-9_-]{25,})/;
+    // Checks for various ID formats: /file/d/ID/..., ?id=ID, or direct ID strings
+    const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing)([a-zA-Z0-9_-]{25,})/;
     const match = url.match(regex);
     
     if (match && match[1]) {
       setIsGDriveConverted(true);
-      setImageLoadError(false);
-      setTimeout(() => setIsGDriveConverted(false), 3000);
       return `https://drive.google.com/uc?export=view&id=${match[1]}`;
     }
     return url;
@@ -125,14 +123,18 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   };
 
   const saveProject = () => {
+    // Re-verify thumbnail URL before saving to ensure it's converted
+    const finalThumbnail = projectFormData.thumbnail ? convertGDriveUrl(projectFormData.thumbnail) : '';
+    
     if (editingProjectId) {
-      const updatedProjects = projects.map(p => p.id === editingProjectId ? { ...p, ...projectFormData } as Project : p);
+      const updatedProjects = projects.map(p => p.id === editingProjectId ? { ...p, ...projectFormData, thumbnail: finalThumbnail } as Project : p);
       onUpdateProjects(updatedProjects);
       setEditingProjectId(null);
     } else {
       const newProject = {
         ...projectFormData,
         id: Date.now().toString(),
+        thumbnail: finalThumbnail,
         category: projectFormData.category || 'BRANDED CONTENT',
         aspectRatio: projectFormData.aspectRatio || '16:9',
         gallery: projectFormData.gallery || [],
@@ -144,9 +146,8 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
       setIsAdding(false);
     }
     setProjectFormData({});
+    setIsGDriveConverted(false);
   };
-
-  const isValidYoutube = projectFormData.videoUrl?.includes('youtube.com/embed/');
 
   if (!isAuthenticated) {
     return (
@@ -185,7 +186,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
           <div className="flex justify-between items-center mb-10">
             <h3 className="text-xl font-logo font-bold text-white uppercase tracking-wider">Project Management</h3>
             <button 
-              onClick={() => { setIsAdding(!isAdding); setEditingProjectId(null); setProjectFormData({}); setImageLoadError(false); }} 
+              onClick={() => { setIsAdding(!isAdding); setEditingProjectId(null); setProjectFormData({}); setImageLoadError(false); setIsGDriveConverted(false); }} 
               className="px-8 py-4 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all"
             >
               {isAdding ? 'Close Form' : '+ New Project'}
@@ -228,24 +229,13 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                             `}
                           >
                             <input type="file" ref={thumbnailInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'thumbnail')} />
-                            
                             {projectFormData.thumbnail && projectFormData.thumbnail.startsWith('data:') ? (
-                              <>
-                                <img src={projectFormData.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-50" alt="Preview" />
-                                <div className="relative z-10 flex flex-col items-center gap-2">
-                                  <RefreshCw size={24} className="text-[#84cc16]" />
-                                  <span className="text-[10px] text-[#84cc16] font-black tracking-widest uppercase">Change File</span>
-                                </div>
-                              </>
-                            ) : (
-                              <>
-                                <Upload size={32} className="text-neutral-700" />
-                                <div className="text-center">
-                                  <p className="text-[11px] text-white font-bold tracking-widest uppercase mb-1">Upload Cinematic Frame</p>
-                                  <p className="text-[9px] text-neutral-500 uppercase tracking-widest">Recommended: 1920x1080 (JPEG/WebP)</p>
-                                </div>
-                              </>
-                            )}
+                              <img src={projectFormData.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" alt="Preview" />
+                            ) : null}
+                            <div className="relative z-10 flex flex-col items-center gap-2">
+                              {projectFormData.thumbnail ? <RefreshCw size={24} className="text-[#84cc16]" /> : <Upload size={32} className="text-neutral-700" />}
+                              <span className="text-[10px] text-white font-black tracking-widest uppercase">{projectFormData.thumbnail ? 'Change File' : 'Upload Frame'}</span>
+                            </div>
                           </div>
                         ) : (
                           <div className="space-y-4">
@@ -255,48 +245,30 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                                 value={projectFormData.thumbnail && !projectFormData.thumbnail.startsWith('data:') ? projectFormData.thumbnail : ''} 
                                 onChange={e => {
                                   const val = e.target.value;
-                                  setProjectFormData({...projectFormData, thumbnail: convertGDriveUrl(val)});
+                                  const converted = convertGDriveUrl(val);
+                                  setProjectFormData({...projectFormData, thumbnail: converted});
+                                  setImageLoadError(false);
                                 }} 
-                                placeholder="Paste Google Drive link or Image URL" 
+                                placeholder="Paste Google Drive link here" 
                               />
-                              <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2">
-                                {isGDriveConverted && (
-                                  <div className="flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30 animate-fade-in">
-                                    <Globe size={12} className="animate-pulse" />
-                                    <span className="text-[8px] font-black tracking-widest uppercase">DRIVE LINK OPTIMIZED</span>
-                                  </div>
-                                )}
-                              </div>
-                            </div>
-                            
-                            {/* Detailed Guidance for G-Drive */}
-                            <div className="p-5 bg-black/50 border border-white/5 rounded-sm">
-                              <div className="flex items-start gap-4">
-                                <AlertCircle size={18} className="text-[#84cc16] shrink-0 mt-1" />
-                                <div className="space-y-2">
-                                  <p className="text-[10px] text-white font-bold tracking-wider uppercase">G-Drive 체크리스트 (화면이 검게 보일 때)</p>
-                                  <ul className="text-[9px] text-neutral-500 space-y-1.5 leading-relaxed">
-                                    <li className="flex gap-2"><span className="text-[#84cc16]">1.</span> 구글 드라이브 파일의 [공유] 설정을 클릭합니다.</li>
-                                    <li className="flex gap-2"><span className="text-[#84cc16]">2.</span> '일반 액세스'를 <strong className="text-neutral-300">[링크가 있는 모든 사용자]</strong>로 변경해야 합니다.</li>
-                                    <li className="flex gap-2"><span className="text-[#84cc16]">3.</span> 변경 후 다시 링크를 복사하여 위 입력창에 붙여넣으세요.</li>
-                                  </ul>
+                              {isGDriveConverted && (
+                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30">
+                                  <Globe size={12} className="animate-pulse" />
+                                  <span className="text-[8px] font-black tracking-widest uppercase">OPTIMIZED</span>
                                 </div>
-                              </div>
+                              )}
+                            </div>
+                            <div className="p-4 bg-black/50 border border-white/5 rounded-sm text-[9px] text-neutral-500 uppercase leading-relaxed tracking-widest">
+                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 권한 체크 (필수)</p>
+                               구글 드라이브 이미지 우클릭 > 공유 > <strong className="text-[#84cc16]">[링크가 있는 모든 사용자]</strong>로 변경해야 이미지가 출력됩니다.
                             </div>
                           </div>
                         )}
                      </div>
 
                      <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest flex items-center justify-between">
-                         YouTube Link
-                       </label>
-                       <input 
-                         className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none"
-                         value={projectFormData.videoUrl || ''}
-                         onChange={e => handleVideoUrlChange(e.target.value)} 
-                         placeholder="Paste YouTube or Shorts URL" 
-                       />
+                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">YouTube Link</label>
+                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.videoUrl || ''} onChange={e => handleVideoUrlChange(e.target.value)} placeholder="YouTube URL" />
                      </div>
 
                      <div className="space-y-2">
@@ -310,68 +282,43 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                      </div>
 
                      <div className="space-y-2 md:col-span-2">
-                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Grid Display Ratio</label>
+                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Grid Ratio</label>
                         <div className="flex gap-4">
-                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '16:9'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '16:9' || !projectFormData.aspectRatio ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Monitor size={16} /> Landscape (16:9)</button>
-                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '9:16'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '9:16' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Smartphone size={16} /> Portrait (9:16)</button>
+                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '16:9'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '16:9' || !projectFormData.aspectRatio ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Monitor size={16} /> 16:9</button>
+                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '9:16'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '9:16' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Smartphone size={16} /> 9:16</button>
                         </div>
                      </div>
                    </div>
 
                    <div className="flex items-end gap-4 mt-12 pt-10 border-t border-white/5">
-                     <button onClick={saveProject} className="flex-grow py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(132,204,22,0.2)]"><Save size={18} /> Sync to Database</button>
+                     <button onClick={saveProject} className="flex-grow py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(132,204,22,0.2)]"><Save size={18} /> Update Film Inventory</button>
                      <button onClick={() => { setIsAdding(false); setEditingProjectId(null); setImageLoadError(false); }} className="px-8 py-5 bg-white/5 text-white hover:bg-white/10 transition-all border border-white/10"><X size={18} /></button>
                    </div>
                  </div>
 
-                 {/* Real-time Monitor */}
-                 <div className="xl:col-span-4 bg-black/60 p-12 flex flex-col items-center justify-start text-center">
-                    <div className="mb-10 w-full">
-                      <p className="text-[10px] text-[#84cc16] font-bold uppercase tracking-[0.4em] mb-2 flex items-center justify-center gap-2">
-                        <span className="w-2 h-2 rounded-full bg-[#84cc16] animate-pulse"></span>
-                        Live Preview Monitor
-                      </p>
-                      <p className="text-[8px] text-neutral-600 uppercase tracking-widest">Real-time Visual Feedback</p>
-                    </div>
-
-                    <div className={`relative bg-neutral-900 border shadow-2xl overflow-hidden transition-all duration-700 group ${imageLoadError ? 'border-red-500/40' : 'border-white/10'} ${projectFormData.aspectRatio === '9:16' ? 'w-[200px] aspect-[9/16]' : 'w-full aspect-video'}`}>
+                 {/* Real-time Preview */}
+                 <div className="xl:col-span-4 bg-black/60 p-12 flex flex-col items-center justify-center text-center">
+                    <div className={`relative bg-neutral-900 border shadow-2xl overflow-hidden transition-all duration-700 ${imageLoadError ? 'border-red-500/40' : 'border-white/10'} ${projectFormData.aspectRatio === '9:16' ? 'w-[180px] aspect-[9/16]' : 'w-full aspect-video'}`}>
                       {projectFormData.thumbnail ? (
                         <img 
                           src={projectFormData.thumbnail} 
-                          key={projectFormData.thumbnail} // Force re-render on change
                           onLoad={() => setImageLoadError(false)}
                           onError={() => setImageLoadError(true)}
-                          className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-20 blur-sm' : 'opacity-80 hover:opacity-100'}`} 
+                          referrerPolicy="no-referrer"
+                          className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-0' : 'opacity-80'}`} 
                           alt="Monitor" 
                         />
-                      ) : (
-                        <div className="w-full h-full flex flex-col items-center justify-center gap-4 text-neutral-800">
-                          <ImageIcon size={48} />
-                          <span className="text-[8px] font-black tracking-widest uppercase">No Image Signal</span>
-                        </div>
-                      )}
-
-                      {/* Diagnostic Overlay */}
-                      {imageLoadError && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-red-950/20 backdrop-blur-md">
-                          <ShieldAlert size={40} className="text-red-500 mb-4 animate-bounce" />
-                          <h6 className="text-red-500 font-logo font-black text-xs uppercase mb-2">Access Denied</h6>
-                          <p className="text-white/40 text-[8px] uppercase leading-relaxed tracking-widest">
-                            이미지를 불러올 수 없습니다.<br/>구글 드라이브의 <strong className="text-white">[공유 설정]</strong>을<br/>다시 확인해주세요.
+                      ) : null}
+                      
+                      {(!projectFormData.thumbnail || imageLoadError) && (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black">
+                          {imageLoadError ? <WifiOff size={40} className="text-red-500 mb-4" /> : <ImageIcon size={40} className="text-neutral-800 mb-4" />}
+                          <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Access Blocked' : 'No Signal'}</h6>
+                          <p className="text-white/20 text-[8px] uppercase tracking-widest leading-relaxed">
+                            {imageLoadError ? 'Google Drive 공유 설정을\n"모든 사용자"로 변경하세요' : '영상 프레임 대기 중'}
                           </p>
                         </div>
                       )}
-                    </div>
-
-                    <div className="mt-12 text-left w-full space-y-4">
-                       <div className="flex items-center gap-3">
-                         <div className={`w-2 h-2 rounded-full ${imageLoadError ? 'bg-red-500' : projectFormData.thumbnail ? 'bg-[#84cc16]' : 'bg-neutral-800'}`}></div>
-                         <span className="text-[9px] text-neutral-500 font-bold uppercase tracking-widest">Signal Status: {imageLoadError ? 'Interrupted' : projectFormData.thumbnail ? 'Stable' : 'Offline'}</span>
-                       </div>
-                       <div className="p-4 bg-white/5 border border-white/5 text-[9px] text-neutral-500 font-medium leading-relaxed uppercase">
-                         <span className="text-[#84cc16] block mb-1">PRO-TIP:</span>
-                         구글 드라이브 이미지가 여전히 안 보인다면, 우측 상단 '링크 복사' 버튼 옆의 설정을 꼭 <strong className="text-white">전체 공개</strong>로 바꿔야 합니다.
-                       </div>
                     </div>
                  </div>
                </div>
@@ -379,28 +326,32 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
           )}
 
           <div className="grid grid-cols-1 gap-4">
-            {projects.map((p, index) => (
-              <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
-                <div className="flex flex-row md:flex-col gap-2">
-                  <button onClick={() => moveProject(index, 'up')} disabled={index === 0} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronUp size={20} /></button>
-                  <button onClick={() => moveProject(index, 'down')} disabled={index === projects.length - 1} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronDown size={20} /></button>
-                </div>
-                <div className={`w-full md:w-32 bg-neutral-900 overflow-hidden ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-                  <img src={p.thumbnail} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
-                </div>
-                <div className="flex-grow text-center md:text-left">
-                  <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-                    <h4 className="text-white font-logo font-bold text-lg uppercase tracking-tight">{p.title}</h4>
-                    <span className="text-[8px] px-2 py-0.5 bg-white/10 text-white/40 font-black rounded-sm">{p.aspectRatio}</span>
+            {projects.map((p, index) => {
+              // Ensure listed items also have converted links
+              const displayThumbnail = convertGDriveUrl(p.thumbnail);
+              return (
+                <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
+                  <div className="flex flex-row md:flex-col gap-2">
+                    <button onClick={() => moveProject(index, 'up')} disabled={index === 0} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronUp size={20} /></button>
+                    <button onClick={() => moveProject(index, 'down')} disabled={index === projects.length - 1} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronDown size={20} /></button>
                   </div>
-                  <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">{p.client} — {p.category}</p>
+                  <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
+                    <img src={displayThumbnail} referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
+                  </div>
+                  <div className="flex-grow text-center md:text-left">
+                    <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
+                      <h4 className="text-white font-logo font-bold text-lg uppercase tracking-tight">{p.title}</h4>
+                      <span className="text-[8px] px-2 py-0.5 bg-white/10 text-white/40 font-black rounded-sm">{p.aspectRatio}</span>
+                    </div>
+                    <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">{p.client} — {p.category}</p>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <button onClick={() => startEditing(p)} className="p-3 bg-white/5 text-white hover:bg-[#84cc16] hover:text-black transition-all rounded-sm"><Edit3 size={18} /></button>
+                    <button onClick={() => { if(window.confirm('Delete this project?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 bg-white/5 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-sm"><Trash2 size={18} /></button>
+                  </div>
                 </div>
-                <div className="flex items-center gap-3">
-                  <button onClick={() => startEditing(p)} className="p-3 bg-white/5 text-white hover:bg-[#84cc16] hover:text-black transition-all rounded-sm"><Edit3 size={18} /></button>
-                  <button onClick={() => { if(window.confirm('Delete this project?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 bg-white/5 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-sm"><Trash2 size={18} /></button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       ) : (

@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { Project, Category } from '../types';
 
@@ -26,10 +27,10 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
               <img
                 src={project.thumbnail}
                 alt={project.title}
+                referrerPolicy="no-referrer"
                 className="w-full h-full object-cover transition-transform duration-[1500ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-110 opacity-60 group-hover:opacity-100"
               />
               
-              {/* Cinematic Hover Overlay */}
               <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-8 text-center">
                 <h3 className="text-black font-logo font-black text-2xl md:text-4xl tracking-tighter uppercase mb-4 leading-none">
                   {project.title}
@@ -42,7 +43,6 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 </div>
               </div>
               
-              {/* AI Badge */}
               {project.category === 'AI-STUDIO' && (
                 <div className="absolute top-6 right-6 bg-[#84cc16] text-black text-[10px] font-black tracking-[0.2em] px-4 py-1.5 rounded-sm uppercase group-hover:opacity-0 transition-opacity shadow-[0_0_20px_rgba(132,204,22,0.5)]">
                   AI CORE

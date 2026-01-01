@@ -11,22 +11,16 @@ interface ProjectModalProps {
 const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
   if (!project) return null;
 
-  // 100% Reliability: Extract only the ID and reconstruct the URL
   const getForcedEmbedUrl = (url: string) => {
     if (!url) return '';
-    
-    // Regular expression to extract the 11-character YouTube video ID
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
     const match = url.match(regExp);
     const videoId = (match && match[2].length === 11) ? match[2] : null;
 
     if (videoId) {
       const origin = window.location.origin;
-      // Reconstruct using the official embed format only
       return `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&enablejsapi=1&origin=${encodeURIComponent(origin)}`;
     }
-    
-    // Fallback if regex fails (should not happen with standard YT links)
     return url;
   };
 
@@ -40,7 +34,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           <X size={32} />
         </button>
 
-        {/* Video Player Section */}
         <div className={`w-full bg-neutral-900 mb-12 shadow-2xl overflow-hidden rounded-sm relative ${project.aspectRatio === '9:16' ? 'max-w-[450px] mx-auto aspect-[9/16]' : 'aspect-video'}`}>
           <iframe
             src={getForcedEmbedUrl(project.videoUrl)}
@@ -51,14 +44,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           ></iframe>
         </div>
 
-        {/* Info Grid */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-16">
           <div className="lg:col-span-1 space-y-12">
             <div>
               <h2 className="font-logo text-4xl font-bold text-white mb-4 tracking-tighter uppercase">{project.title}</h2>
               <div className="w-20 h-[2px] bg-[#84cc16] mb-8"></div>
               <p className="text-neutral-400 leading-relaxed text-sm">
-                {project.description || "Cinematic branded content produced by INV-FILM. Highlighting precision in visual storytelling and technical excellence."}
+                {project.description || "Cinematic branded content produced by INV-FILM."}
               </p>
             </div>
 
@@ -95,6 +87,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
                   <img
                     src={img}
                     alt={`Still ${i}`}
+                    referrerPolicy="no-referrer"
                     className="w-full h-auto object-cover transition-transform duration-700 group-hover:scale-105"
                   />
                 </div>

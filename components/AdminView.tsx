@@ -29,36 +29,38 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
     if (sessionAuth === 'true') setIsAuthenticated(true);
+    // 어드민 진입 시 강제 최상단 스크롤
+    window.scrollTo(0, 0);
   }, []);
-
-  // Professional G-Drive Image Resolver (Using Thumbnail Endpoint for high compatibility)
-  const convertGDriveUrl = (url: string): string => {
-    if (!url) return '';
-    if (url.startsWith('data:')) return url;
-    
-    // Support all Google Drive URL variants and extract the ID
-    const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing\/|uc\?.*?id=)([a-zA-Z0-9_-]{25,})/;
-    const match = url.match(regex);
-    
-    if (match && match[1]) {
-      const fileId = match[1];
-      setIsGDriveConverted(true);
-      // 'sz=w1920' ensures we get a high-quality cinematic frame
-      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1920`;
-    }
-    return url;
-  };
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    if (passcode === '292513QQWW') { 
+    const cleanInput = passcode.trim().toUpperCase();
+    const MASTER_KEY = '292513QQWW';
+
+    if (cleanInput === MASTER_KEY) { 
       setIsAuthenticated(true);
       sessionStorage.setItem('inv_admin_auth', 'true');
+      setAuthError(false);
     } else {
       setAuthError(true);
-      setPasscode('');
-      setTimeout(() => setAuthError(false), 2000);
+      setTimeout(() => {
+        setAuthError(false);
+        setPasscode('');
+      }, 600);
     }
+  };
+
+  const convertGDriveUrl = (url: string): string => {
+    if (!url) return '';
+    if (url.startsWith('data:')) return url;
+    const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing\/|uc\?.*?id=)([a-zA-Z0-9_-]{25,})/;
+    const match = url.match(regex);
+    if (match && match[1]) {
+      setIsGDriveConverted(true);
+      return `https://drive.google.com/thumbnail?id=${match[1]}&sz=w1920`;
+    }
+    return url;
   };
 
   const getYouTubeEmbedUrl = (url: string) => {
@@ -154,15 +156,32 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
 
   if (!isAuthenticated) {
     return (
-      <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 animate-fade-up">
-        <div className="w-full max-w-md bg-white/5 border border-white/10 p-12 rounded-sm text-center shadow-2xl relative">
-          <div className="mb-10 inline-flex items-center justify-center w-20 h-20 rounded-full bg-black border border-white/10 text-[#84cc16]">
-            <Lock size={32} className={authError ? 'animate-shake text-red-500' : ''} />
+      <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 animate-fade-up">
+        <div className={`w-full max-w-md bg-white/5 border p-12 rounded-sm text-center shadow-2xl relative transition-all duration-300 ${authError ? 'border-red-500 animate-shake' : 'border-white/10'}`}>
+          <div className={`mb-10 inline-flex items-center justify-center w-20 h-20 rounded-full bg-black border text-[#84cc16] transition-colors ${authError ? 'border-red-500 text-red-500' : 'border-white/10'}`}>
+            <Lock size={32} />
           </div>
-          <h1 className="text-3xl font-logo font-black text-white tracking-tighter uppercase mb-10">Admin Access</h1>
+          <h1 className="text-3xl font-logo font-black text-white tracking-tighter uppercase mb-2">Admin Access</h1>
+          <p className="text-[10px] text-neutral-500 tracking-[0.3em] uppercase mb-10 font-bold">Secure Environment</p>
+          
           <form onSubmit={handleLogin} className="space-y-6">
-            <input type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="ENTER PASSCODE" className="w-full bg-black border border-white/10 p-5 text-center text-white tracking-[0.5em] font-bold focus:border-[#84cc16] outline-none transition-all" autoFocus />
-            <button type="submit" className="w-full py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-3">Authorize <ArrowRight size={18} /></button>
+            <div className="relative">
+              <input 
+                type="password" 
+                value={passcode} 
+                onChange={(e) => setPasscode(e.target.value)} 
+                placeholder="ENTER PASSCODE" 
+                className={`w-full bg-black border p-5 text-center text-white tracking-[0.5em] font-bold outline-none transition-all ${authError ? 'border-red-500 text-red-500' : 'border-white/10 focus:border-[#84cc16]'}`} 
+                autoFocus 
+              />
+              {authError && <p className="absolute -bottom-6 left-0 w-full text-[9px] text-red-500 font-black tracking-widest uppercase">Invalid passcode. access denied.</p>}
+            </div>
+            <button 
+              type="submit" 
+              className={`w-full py-5 font-logo font-black tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${authError ? 'bg-red-500 text-white' : 'bg-[#84cc16] text-black hover:bg-white'}`}
+            >
+              {authError ? 'Retry' : 'Authorize'} <ArrowRight size={18} />
+            </button>
           </form>
         </div>
       </div>

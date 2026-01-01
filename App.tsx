@@ -32,6 +32,11 @@ const App: React.FC = () => {
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
+  // View 전환 시 최상단 스크롤
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'instant' });
+  }, [currentView]);
+
   useEffect(() => {
     // Initial data load
     const savedProjects = localStorage.getItem('inv_film_projects');
@@ -39,7 +44,8 @@ const App: React.FC = () => {
     
     if (savedProjects) {
       try { 
-        loadedProjects = JSON.parse(savedProjects);
+        const parsed = JSON.parse(savedProjects);
+        loadedProjects = Array.isArray(parsed) ? parsed : INITIAL_PROJECTS;
       } catch (e) { 
         loadedProjects = INITIAL_PROJECTS; 
       }
@@ -47,7 +53,6 @@ const App: React.FC = () => {
       loadedProjects = INITIAL_PROJECTS;
     }
 
-    // Auto-fix existing broken URLs in projects
     const fixedProjects = loadedProjects.map(p => ({
       ...p,
       videoUrl: normalizeYT(p.videoUrl)
@@ -77,7 +82,6 @@ const App: React.FC = () => {
   }, []);
 
   const handleUpdateProjects = (newProjects: Project[]) => {
-    // Also normalize on save
     const normalized = newProjects.map(p => ({ ...p, videoUrl: normalizeYT(p.videoUrl) }));
     setProjects(normalized);
     localStorage.setItem('inv_film_projects', JSON.stringify(normalized));

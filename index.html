@@ -9,17 +9,20 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&family=Syne:wght@700;800;900&display=swap" rel="stylesheet">
     
     <style>
       :root {
-        --bg-color: #030303;
+        --bg-color: #080808;
+        --bg-gradient: radial-gradient(circle at 50% -20%, #1a1a1a 0%, #050505 100%);
         --accent-lime: #84cc16;
       }
       
       body {
         font-family: 'Outfit', sans-serif;
-        background-color: var(--bg-color);
+        background: var(--bg-color);
+        background: var(--bg-gradient);
+        background-attachment: fixed;
         color: #ffffff;
         margin: 0;
         padding: 0;
@@ -34,35 +37,40 @@
         width: 100%;
         height: 100%;
         background-image: url('https://grainy-gradients.vercel.app/noise.svg');
-        opacity: 0.04;
+        opacity: 0.05;
         pointer-events: none;
         z-index: 9999;
       }
 
-      .font-logo { font-family: 'Syne', sans-serif; letter-spacing: -0.05em; text-transform: uppercase; }
+      .font-logo { font-family: 'Syne', sans-serif; letter-spacing: -0.04em; text-transform: uppercase; }
       .font-heading { font-family: 'Syne', sans-serif; line-height: 0.85; text-transform: uppercase; }
 
-      /* 로딩 중일 때만 보이는 스타일 */
       #root:empty {
         display: flex;
         align-items: center;
         justify-content: center;
         height: 100vh;
-        background: #030303;
+        background: #050505;
       }
       #root:empty::after {
         content: 'INV FILM';
         font-family: 'Syne', sans-serif;
         font-weight: 900;
-        font-size: 2rem;
+        font-size: 2.5rem;
         letter-spacing: 0.5em;
         color: rgba(255,255,255,0.2);
         animation: loading-pulse 1.5s infinite ease-in-out;
       }
       @keyframes loading-pulse {
-        0%, 100% { opacity: 0.2; transform: scale(0.95); filter: blur(2px); }
+        0%, 100% { opacity: 0.2; transform: scale(0.98); filter: blur(2px); }
         50% { opacity: 0.5; transform: scale(1); filter: blur(0px); }
       }
+
+      /* Custom Scrollbar for cinematic feel */
+      ::-webkit-scrollbar { width: 6px; }
+      ::-webkit-scrollbar-track { background: #050505; }
+      ::-webkit-scrollbar-thumb { background: #222; border-radius: 10px; }
+      ::-webkit-scrollbar-thumb:hover { background: var(--accent-lime); }
     </style>
   <script type="importmap">
 {
@@ -79,7 +87,6 @@
   <body>
     <div class="grain-overlay"></div>
     <div id="root"></div>
-    <!-- / 를 붙여 절대 경로로 지정하여 Vite가 찾기 쉽게 합니다 -->
     <script type="module" src="/index.tsx"></script>
   </body>
 </html>

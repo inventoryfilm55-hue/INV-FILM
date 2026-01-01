@@ -1,5 +1,34 @@
 
-import { Project } from './types';
+import { Project, SiteContent } from './types';
+
+export const DEFAULT_SITE_CONTENT: SiteContent = {
+  directors: {
+    name: "JUNG",
+    subName: "JUNE",
+    manifesto: "WE DON'T JUST RECORD MOMENTS. WE INVENTORY THE ESSENCE OF HUMAN EMOTION THROUGH LIGHT AND SHADOW.",
+    processTitle: "Process",
+    processDesc: "Jung June operates at the intersection of cinematic tradition and digital evolution. His process involves a rigorous deconstruction of brand DNA.",
+    techTitle: "Technology",
+    techDesc: "Utilizing state-of-the-art optical tools and proprietary AI-driven pre-visualization, he bridges the gap between imagination and reality.",
+    disciplines: ['Cinematic Storytelling', 'Automotive Art', 'Luxury Branding', 'Abstract Narratives', 'AI-Enhanced Vision', 'Futuristic Minimalism'],
+    stats: [
+      { label: "Years of Excellence", value: "12+" },
+      { label: "Campaign Deliveries", value: "500" },
+      { label: "Innovation", value: "∞" },
+      { label: "Vision", value: "ONE" }
+    ]
+  },
+  about: {
+    headline: "WE CRAFT VISUAL NARRATIVES FOR THE BOLD.",
+    description1: "Founded with the vision to bridge the gap between commercial efficiency and cinematic art, INV-FILM has become the primary destination for global brands.",
+    description2: "We believe every frame is an inventory of human emotion, technical precision, and cultural zeitgeist. From Samsung to Genesis, our portfolio reflects a commitment to the 'Bold' aesthetic.",
+    img1: "https://images.unsplash.com/photo-1492691523567-6170c81efad1?q=80&w=1470&auto=format&fit=crop",
+    img2: "https://images.unsplash.com/photo-1542291026-7eec264c27ff?q=80&w=1470&auto=format&fit=crop",
+    philosophy: "PRECISION IN CHAOS",
+    hub: "SEOUL & BEYOND",
+    innovation: "NEURAL CINEMA LABS"
+  }
+};
 
 export const PROJECTS: Project[] = [
   {
@@ -40,57 +69,5 @@ export const PROJECTS: Project[] = [
     aspectRatio: '9:16',
     description: 'A vertical series exploring the science of skincare.',
     gallery: ['https://picsum.photos/seed/ae1/600/1067']
-  },
-  {
-    id: '4',
-    title: 'HYUNDAI - THE IONIQ WAY',
-    category: 'BRANDED CONTENT',
-    thumbnail: 'https://images.unsplash.com/photo-1605142859862-978be7eba909?q=80&w=1470&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    client: 'HYUNDAI',
-    director: 'INV-FILM',
-    year: '2023',
-    aspectRatio: '16:9',
-    description: 'The journey towards a sustainable future of mobility.',
-    gallery: ['https://picsum.photos/seed/h1/1200/675']
-  },
-  {
-    id: '5',
-    title: 'LANEIGE - WATER BANK',
-    category: 'BRANDED CONTENT',
-    thumbnail: 'https://images.unsplash.com/photo-1511405946472-a37e3b5ccd47?q=80&w=1287&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    client: 'LANEIGE',
-    director: 'INV-FILM',
-    year: '2024',
-    aspectRatio: '9:16',
-    description: 'High-speed liquid cinematography in a social-first format.',
-    gallery: ['https://picsum.photos/seed/ln1/600/1067']
-  },
-  {
-    id: '6',
-    title: 'SK TELECOM - CONNECT',
-    category: 'INTERVIEW',
-    thumbnail: 'https://images.unsplash.com/photo-1516280440614-37939bbacd81?q=80&w=1470&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    client: 'SKT',
-    director: 'LEE JAE-HOON',
-    year: '2023',
-    aspectRatio: '16:9',
-    description: 'Behind the scenes of the digital infrastructure that powers the nation.',
-    gallery: ['https://picsum.photos/seed/sk1/1200/675']
-  },
-  {
-    id: '7',
-    title: 'ARTIFICIAL METROPOLIS',
-    category: 'AI-STUDIO',
-    thumbnail: 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1364&auto=format&fit=crop',
-    videoUrl: 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-    client: 'EXPERIMENTAL',
-    director: 'AI-CORE',
-    year: '2024',
-    aspectRatio: '16:9',
-    description: 'A study of machine-generated architecture.',
-    gallery: ['https://picsum.photos/seed/am1/1200/675']
   }
 ];

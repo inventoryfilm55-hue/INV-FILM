@@ -19,6 +19,30 @@ export interface Project {
   aspectRatio: AspectRatio;
 }
 
+export interface SiteContent {
+  directors: {
+    name: string;
+    subName: string;
+    manifesto: string;
+    processTitle: string;
+    processDesc: string;
+    techTitle: string;
+    techDesc: string;
+    disciplines: string[];
+    stats: { label: string; value: string }[];
+  };
+  about: {
+    headline: string;
+    description1: string;
+    description2: string;
+    img1: string;
+    img2: string;
+    philosophy: string;
+    hub: string;
+    innovation: string;
+  };
+}
+
 export interface SynopsisRequest {
   brandName: string;
   mood: string;
@@ -29,5 +53,5 @@ export interface SynopsisResponse {
   concept: string;
   synopsis: string;
   visualHook: string;
-  brandName?: string; // Optional field for passing back to the request form
+  brandName?: string;
 }

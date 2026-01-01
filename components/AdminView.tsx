@@ -1,26 +1,25 @@
 
 import React, { useState, useEffect } from 'react';
-import { Project, Category, AspectRatio } from '../types';
-import { Plus, Trash2, List, FileVideo, Image as ImageIcon, Lock, ShieldCheck, ArrowRight, GripVertical, Monitor, Smartphone, Download, Upload, Copy, Check } from 'lucide-react';
+import { Project, Category, AspectRatio, SiteContent } from '../types';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
+  siteContent: SiteContent;
   onUpdateProjects: (projects: Project[]) => void;
+  onUpdateContent: (content: SiteContent) => void;
 }
 
-const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => {
+const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdateProjects, onUpdateContent }) => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState(false);
-  const [isAdding, setIsAdding] = useState(false);
-  const [draggedItemIndex, setDraggedItemIndex] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
+  const [activeTab, setActiveTab] = useState<'FILMS' | 'SITE_CONTENT'>('FILMS');
   
-  const [formData, setFormData] = useState<Partial<Project>>({
-    category: 'BRANDED CONTENT',
-    aspectRatio: '16:9',
-    gallery: []
-  });
+  // Project editing state
+  const [isAdding, setIsAdding] = useState(false);
+  const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
+  const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
 
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
@@ -32,7 +31,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
     if (passcode === '292513QQWW') { 
       setIsAuthenticated(true);
       sessionStorage.setItem('inv_admin_auth', 'true');
-      setAuthError(false);
     } else {
       setAuthError(true);
       setPasscode('');
@@ -40,94 +38,71 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
     }
   };
 
-  const categories: Category[] = ['BRANDED CONTENT', 'INTERVIEW', 'MAKING', 'AI-STUDIO'];
-
-  const handleAddProject = (e: React.FormEvent) => {
-    e.preventDefault();
-    const newProject: Project = {
-      id: Date.now().toString(),
-      title: formData.title || 'Untitled',
-      category: formData.category as Category,
-      thumbnail: formData.thumbnail || 'https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1364&auto=format&fit=crop',
-      videoUrl: formData.videoUrl || 'https://www.youtube.com/embed/dQw4w9WgXcQ',
-      client: formData.client || 'N/A',
-      director: formData.director || 'INV-FILM',
-      year: formData.year || new Date().getFullYear().toString(),
-      description: formData.description || '',
-      gallery: formData.gallery || [],
-      aspectRatio: formData.aspectRatio as AspectRatio
-    };
-
-    onUpdateProjects([newProject, ...projects]);
-    setIsAdding(false);
-    setFormData({ category: 'BRANDED CONTENT', aspectRatio: '16:9', gallery: [] });
-  };
-
-  const handleDeleteProject = (id: string) => {
-    if (confirm('Are you sure you want to remove this cinematic inventory?')) {
-      onUpdateProjects(projects.filter(p => p.id !== id));
+  const handleUpdateSiteContent = (path: string, value: any) => {
+    const keys = path.split('.');
+    const newContent = JSON.parse(JSON.stringify(siteContent));
+    let current = newContent;
+    for (let i = 0; i < keys.length - 1; i++) {
+      current = current[keys[i]];
     }
+    current[keys[keys.length - 1]] = value;
+    onUpdateContent(newContent);
   };
 
-  const exportData = () => {
-    const dataStr = JSON.stringify(projects, null, 2);
-    navigator.clipboard.writeText(dataStr);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-    alert('프로젝트 데이터가 클립보드에 복사되었습니다! constants.tsx 파일의 PROJECTS 변수에 붙여넣으세요.');
-  };
-
-  const importData = () => {
-    const data = prompt('가져올 프로젝트 JSON 데이터를 붙여넣으세요:');
-    if (data) {
-      try {
-        const parsed = JSON.parse(data);
-        if (Array.isArray(parsed)) {
-          onUpdateProjects(parsed);
-          alert('데이터를 성공적으로 가져왔습니다.');
-        }
-      } catch (e) {
-        alert('잘못된 데이터 형식입니다.');
-      }
-    }
-  };
-
-  const handleDragStart = (index: number) => {
-    setDraggedItemIndex(index);
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedItemIndex === null || draggedItemIndex === index) return;
+  // Move Project Logic
+  const moveProject = (index: number, direction: 'up' | 'down') => {
     const newProjects = [...projects];
-    const item = newProjects.splice(draggedItemIndex, 1)[0];
-    newProjects.splice(index, 0, item);
-    setDraggedItemIndex(index);
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    
+    if (targetIndex < 0 || targetIndex >= newProjects.length) return;
+    
+    const temp = newProjects[index];
+    newProjects[index] = newProjects[targetIndex];
+    newProjects[targetIndex] = temp;
+    
     onUpdateProjects(newProjects);
+  };
+
+  // Project management handlers
+  const startEditing = (project: Project) => {
+    setEditingProjectId(project.id);
+    setProjectFormData(project);
+    setIsAdding(false);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const saveProject = () => {
+    if (editingProjectId) {
+      const updatedProjects = projects.map(p => p.id === editingProjectId ? { ...p, ...projectFormData } as Project : p);
+      onUpdateProjects(updatedProjects);
+      setEditingProjectId(null);
+    } else {
+      const newProject = {
+        ...projectFormData,
+        id: Date.now().toString(),
+        category: projectFormData.category || 'BRANDED CONTENT',
+        aspectRatio: projectFormData.aspectRatio || '16:9',
+        gallery: projectFormData.gallery || [],
+        director: projectFormData.director || 'INV-FILM',
+        year: projectFormData.year || new Date().getFullYear().toString()
+      } as Project;
+      onUpdateProjects([newProject, ...projects]);
+      setIsAdding(false);
+    }
+    setProjectFormData({});
   };
 
   if (!isAuthenticated) {
     return (
       <div className="min-h-[80vh] flex flex-col items-center justify-center p-6 animate-fade-up">
-        <div className="w-full max-w-md bg-white/5 backdrop-blur-3xl border border-white/10 p-12 rounded-sm text-center shadow-2xl relative overflow-hidden">
-          <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#84cc16]/10 rounded-full blur-3xl"></div>
+        <div className="w-full max-w-md bg-white/5 border border-white/10 p-12 rounded-sm text-center shadow-2xl relative">
           <div className="mb-10 inline-flex items-center justify-center w-20 h-20 rounded-full bg-black border border-white/10 text-[#84cc16]">
             <Lock size={32} className={authError ? 'animate-shake text-red-500' : ''} />
           </div>
-          <h2 className="text-[10px] font-bold tracking-[0.6em] uppercase text-white/40 mb-2">Security Protocol</h2>
           <h1 className="text-3xl font-logo font-black text-white tracking-tighter uppercase mb-10">Admin Access</h1>
           <form onSubmit={handleLogin} className="space-y-6">
-            <input 
-              type="password"
-              value={passcode}
-              onChange={(e) => setPasscode(e.target.value)}
-              placeholder="ENTER PASSCODE"
-              className={`w-full bg-black border ${authError ? 'border-red-500' : 'border-white/10'} p-5 text-center text-white tracking-[0.5em] font-bold focus:border-[#84cc16] outline-none transition-all`}
-              autoFocus
-            />
-            <button type="submit" className="w-full py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-3">
-              Authorize <ArrowRight size={18} />
-            </button>
+            <input type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="ENTER PASSCODE" className="w-full bg-black border border-white/10 p-5 text-center text-white tracking-[0.5em] font-bold focus:border-[#84cc16] outline-none transition-all" autoFocus />
+            <button type="submit" className="w-full py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-3">Authorize <ArrowRight size={18} /></button>
           </form>
         </div>
       </div>
@@ -136,131 +111,214 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, onUpdateProjects }) => 
 
   return (
     <div className="max-w-[1800px] mx-auto px-6 md:px-12 py-32 animate-fade-up">
-      <div className="flex flex-col md:flex-row justify-between items-end mb-16 gap-8">
-        <div>
-          <h2 className="text-[10px] font-bold tracking-[0.6em] uppercase text-[#84cc16] mb-4 flex items-center gap-4">
-            <span className="w-12 h-[1px] bg-[#84cc16]"></span>
-            Authenticated Session <ShieldCheck size={14} />
-          </h2>
-          <h1 className="text-6xl md:text-8xl font-logo font-black tracking-tighter text-white uppercase leading-none">ADMIN <br/> PANEL</h1>
-        </div>
-        <div className="flex flex-wrap gap-4 justify-end">
-          <div className="flex bg-white/5 p-1 rounded-sm border border-white/5">
-            <button onClick={exportData} className="p-4 text-white/40 hover:text-[#84cc16] transition-all flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase">
-              {copied ? <Check size={16} /> : <Copy size={16} />} Export
-            </button>
-            <div className="w-[1px] bg-white/10 my-2"></div>
-            <button onClick={importData} className="p-4 text-white/40 hover:text-blue-400 transition-all flex items-center gap-2 text-[10px] font-bold tracking-widest uppercase">
-              <Upload size={16} /> Import
-            </button>
-          </div>
+      {/* Tab Switcher */}
+      <div className="flex flex-col md:flex-row justify-between items-start lg:items-center mb-16 gap-8 border-b border-white/10 pb-8">
+        <div className="flex gap-12">
           <button 
-            onClick={() => setIsAdding(!isAdding)}
-            className="px-12 py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:brightness-110 transition-all flex items-center gap-3 shadow-[0_0_30px_rgba(132,204,22,0.3)]"
+            onClick={() => setActiveTab('FILMS')} 
+            className={`group relative pb-4 transition-all ${activeTab === 'FILMS' ? 'text-white' : 'text-white/20 hover:text-white/40'}`}
           >
-            {isAdding ? <List size={20} /> : <Plus size={20} />}
-            {isAdding ? 'View List' : 'Add New Film'}
+            <span className="text-4xl md:text-6xl font-logo font-black tracking-tighter uppercase">Films</span>
+            {activeTab === 'FILMS' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#84cc16] shadow-[0_0_15px_#84cc16]"></span>}
           </button>
+          <button 
+            onClick={() => setActiveTab('SITE_CONTENT')} 
+            className={`group relative pb-4 transition-all ${activeTab === 'SITE_CONTENT' ? 'text-white' : 'text-white/20 hover:text-white/40'}`}
+          >
+            <span className="text-4xl md:text-6xl font-logo font-black tracking-tighter uppercase">Content</span>
+            {activeTab === 'SITE_CONTENT' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#84cc16] shadow-[0_0_15px_#84cc16]"></span>}
+          </button>
+        </div>
+        <div className="flex items-center gap-3 bg-[#84cc16]/10 px-4 py-2 rounded-full border border-[#84cc16]/20">
+          <CheckCircle size={14} className="text-[#84cc16]" />
+          <span className="text-[10px] font-black tracking-widest text-[#84cc16] uppercase">System Online</span>
         </div>
       </div>
 
-      {isAdding ? (
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-20">
-          <div className="lg:col-span-7">
-            <form onSubmit={handleAddProject} className="space-y-10 bg-white/5 p-10 backdrop-blur-md border border-white/5">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Film Title</label>
-                  <input required className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" placeholder="SAMSUNG - THE ALLIANCE" value={formData.title || ''} onChange={e => setFormData({...formData, title: e.target.value})} />
+      {activeTab === 'FILMS' ? (
+        <div className="space-y-8">
+          <div className="flex justify-between items-center mb-10">
+            <h3 className="text-xl font-logo font-bold text-white uppercase tracking-wider">Project Management</h3>
+            <button 
+              onClick={() => { setIsAdding(!isAdding); setEditingProjectId(null); setProjectFormData({}); }} 
+              className="px-8 py-4 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all"
+            >
+              {isAdding ? 'Close Form' : '+ New Project'}
+            </button>
+          </div>
+
+          {(isAdding || editingProjectId) && (
+             <div className="bg-white/5 p-10 border border-[#84cc16]/30 mb-12 animate-in slide-in-from-top duration-500">
+               <h4 className="text-[#84cc16] font-logo font-black text-xl mb-8 uppercase">
+                 {editingProjectId ? 'Edit Project' : 'Create New Project'}
+               </h4>
+               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                 <div className="space-y-2">
+                   <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Title</label>
+                   <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.title || ''} onChange={e => setProjectFormData({...projectFormData, title: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Client</label>
+                   <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Thumbnail URL</label>
+                   <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.thumbnail || ''} onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                   <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Video Embed URL</label>
+                   <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.videoUrl || ''} onChange={e => setProjectFormData({...projectFormData, videoUrl: e.target.value})} />
+                 </div>
+                 <div className="space-y-2">
+                    <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Category</label>
+                    <select className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.category || 'BRANDED CONTENT'} onChange={e => setProjectFormData({...projectFormData, category: e.target.value as Category})}>
+                      <option value="BRANDED CONTENT">BRANDED CONTENT</option>
+                      <option value="AI-STUDIO">AI-STUDIO</option>
+                      <option value="INTERVIEW">INTERVIEW</option>
+                      <option value="MAKING">MAKING</option>
+                    </select>
+                 </div>
+                 <div className="flex items-end gap-4">
+                   <button onClick={saveProject} className="flex-grow py-4 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-2">
+                     <Save size={18} /> Save Changes
+                   </button>
+                   <button onClick={() => { setIsAdding(false); setEditingProjectId(null); }} className="px-6 py-4 bg-white/5 text-white hover:bg-white/10 transition-all border border-white/10">
+                     <X size={18} />
+                   </button>
+                 </div>
+               </div>
+             </div>
+          )}
+
+          <div className="grid grid-cols-1 gap-4">
+            {projects.map((p, index) => (
+              <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
+                {/* Reorder Controls */}
+                <div className="flex flex-row md:flex-col gap-2">
+                  <button 
+                    onClick={() => moveProject(index, 'up')}
+                    disabled={index === 0}
+                    className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"
+                    title="Move Up"
+                  >
+                    <ChevronUp size={20} />
+                  </button>
+                  <button 
+                    onClick={() => moveProject(index, 'down')}
+                    disabled={index === projects.length - 1}
+                    className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"
+                    title="Move Down"
+                  >
+                    <ChevronDown size={20} />
+                  </button>
                 </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Client</label>
-                  <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" placeholder="SAMSUNG GALAXY" value={formData.client || ''} onChange={e => setFormData({...formData, client: e.target.value})} />
+
+                <div className="w-full md:w-32 aspect-video bg-neutral-900 overflow-hidden">
+                  <img src={p.thumbnail} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
+                </div>
+                <div className="flex-grow text-center md:text-left">
+                  <h4 className="text-white font-logo font-bold text-lg uppercase tracking-tight">{p.title}</h4>
+                  <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">{p.client} — {p.category}</p>
+                </div>
+                <div className="flex items-center gap-3">
+                  <button 
+                    onClick={() => startEditing(p)}
+                    className="p-3 bg-white/5 text-white hover:bg-[#84cc16] hover:text-black transition-all rounded-sm"
+                    title="Edit Film Info"
+                  >
+                    <Edit3 size={18} />
+                  </button>
+                  <button 
+                    onClick={() => {
+                      if(window.confirm('Delete this project?')) {
+                        onUpdateProjects(projects.filter(item => item.id !== p.id))
+                      }
+                    }} 
+                    className="p-3 bg-white/5 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-sm"
+                    title="Delete Film"
+                  >
+                    <Trash2 size={18} />
+                  </button>
                 </div>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Category</label>
-                  <select className="w-full bg-black border border-white/10 p-4 text-white outline-none appearance-none" value={formData.category} onChange={e => setFormData({...formData, category: e.target.value as Category})}>
-                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
-                  </select>
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Year</label>
-                  <input className="w-full bg-black border border-white/10 p-4 text-white outline-none" placeholder="2024" value={formData.year || ''} onChange={e => setFormData({...formData, year: e.target.value})} />
-                </div>
-                <div className="space-y-3">
-                  <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Aspect Ratio</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button type="button" onClick={() => setFormData({...formData, aspectRatio: '16:9'})} className={`flex items-center justify-center gap-2 py-4 border text-[10px] font-bold tracking-widest transition-all ${formData.aspectRatio === '16:9' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-black text-white/40 border-white/10'}`}>
-                      <Monitor size={14} /> 16:9
-                    </button>
-                    <button type="button" onClick={() => setFormData({...formData, aspectRatio: '9:16'})} className={`flex items-center justify-center gap-2 py-4 border text-[10px] font-bold tracking-widest transition-all ${formData.aspectRatio === '9:16' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-black text-white/40 border-white/10'}`}>
-                      <Smartphone size={14} /> 9:16
-                    </button>
+            ))}
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-16 animate-in fade-in slide-in-from-bottom-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-20">
+            {/* Directors Section Editor */}
+            <div className="space-y-12 bg-white/5 p-8 border border-white/5">
+              <div className="flex items-center gap-4 mb-8">
+                <h3 className="text-3xl font-logo font-black text-white uppercase">Directors Page</h3>
+                <div className="flex-grow h-[1px] bg-[#84cc16]/30"></div>
+              </div>
+              <div className="grid gap-8">
+                <div>
+                  <label className="text-[10px] font-bold text-[#84cc16] tracking-widest uppercase mb-3 block">Director Name</label>
+                  <div className="flex gap-4">
+                    <input className="w-1/2 bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={siteContent.directors.name} onChange={e => handleUpdateSiteContent('directors.name', e.target.value)} placeholder="Main Name" />
+                    <input className="w-1/2 bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={siteContent.directors.subName} onChange={e => handleUpdateSiteContent('directors.subName', e.target.value)} placeholder="Sub Name" />
                   </div>
                 </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#84cc16] tracking-widest uppercase mb-3 block">Manifesto (Core Quote)</label>
+                  <textarea rows={4} className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none leading-relaxed" value={siteContent.directors.manifesto} onChange={e => handleUpdateSiteContent('directors.manifesto', e.target.value)} />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                   <div>
+                     <label className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3 block">Process Headline</label>
+                     <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={siteContent.directors.processTitle} onChange={e => handleUpdateSiteContent('directors.processTitle', e.target.value)} />
+                   </div>
+                   <div>
+                     <label className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3 block">Technology Headline</label>
+                     <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={siteContent.directors.techTitle} onChange={e => handleUpdateSiteContent('directors.techTitle', e.target.value)} />
+                   </div>
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3 block">Technology Description</label>
+                  <textarea rows={3} className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none leading-relaxed" value={siteContent.directors.techDesc} onChange={e => handleUpdateSiteContent('directors.techDesc', e.target.value)} />
+                </div>
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Thumbnail URL</label>
-                <input required className="w-full bg-black border border-white/10 p-4 text-white outline-none text-sm" placeholder="Image URL" value={formData.thumbnail || ''} onChange={e => setFormData({...formData, thumbnail: e.target.value})} />
+            </div>
+
+            {/* About Section Editor */}
+            <div className="space-y-12 bg-white/5 p-8 border border-white/5">
+              <div className="flex items-center gap-4 mb-8">
+                <h3 className="text-3xl font-logo font-black text-white uppercase">About Page</h3>
+                <div className="flex-grow h-[1px] bg-[#84cc16]/30"></div>
               </div>
-              <div className="space-y-3">
-                <label className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Video URL</label>
-                <input required className="w-full bg-black border border-white/10 p-4 text-white outline-none text-sm" placeholder="https://www.youtube.com/embed/..." value={formData.videoUrl || ''} onChange={e => setFormData({...formData, videoUrl: e.target.value})} />
-              </div>
-              <button type="submit" className="w-full py-6 bg-white text-black font-logo font-black tracking-widest uppercase hover:bg-[#84cc16] transition-all">Publish to Inventory</button>
-            </form>
-          </div>
-          <div className="lg:col-span-5">
-            <div className="sticky top-32 space-y-8">
-              <p className="text-[10px] font-bold tracking-widest text-white/30 uppercase">Live Preview</p>
-              <div className={`relative overflow-hidden bg-neutral-900 border border-white/10 ${formData.aspectRatio === '9:16' ? 'aspect-[9/16] w-64 mx-auto' : 'aspect-video w-full'}`}>
-                {formData.thumbnail && <img src={formData.thumbnail} className="w-full h-full object-cover" />}
-                <div className="absolute bottom-6 left-6">
-                  <p className="text-white font-logo font-black text-2xl uppercase tracking-tighter">{formData.title || 'TITLE'}</p>
+              <div className="grid gap-8">
+                <div>
+                  <label className="text-[10px] font-bold text-[#84cc16] tracking-widest uppercase mb-3 block">Main Headline</label>
+                  <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={siteContent.about.headline} onChange={e => handleUpdateSiteContent('about.headline', e.target.value)} />
+                </div>
+                <div>
+                  <label className="text-[10px] font-bold text-[#84cc16] tracking-widest uppercase mb-3 block">Description Paragraphs</label>
+                  <textarea rows={3} className="w-full bg-black border border-white/10 p-5 text-white mb-4 focus:border-[#84cc16] outline-none leading-relaxed" value={siteContent.about.description1} onChange={e => handleUpdateSiteContent('about.description1', e.target.value)} placeholder="Paragraph 1" />
+                  <textarea rows={3} className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none leading-relaxed" value={siteContent.about.description2} onChange={e => handleUpdateSiteContent('about.description2', e.target.value)} placeholder="Paragraph 2" />
+                </div>
+                <div className="grid grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3 block">Image 1 (Photo URL)</label>
+                    <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none mb-3" value={siteContent.about.img1} onChange={e => handleUpdateSiteContent('about.img1', e.target.value)} />
+                    <div className="aspect-video bg-black border border-white/5 flex items-center justify-center overflow-hidden">
+                      {siteContent.about.img1 ? <img src={siteContent.about.img1} className="w-full h-full object-cover" /> : <ImageIcon className="text-neutral-800" />}
+                    </div>
+                  </div>
+                  <div>
+                    <label className="text-[10px] font-bold text-neutral-500 tracking-widest uppercase mb-3 block">Image 2 (Photo URL)</label>
+                    <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none mb-3" value={siteContent.about.img2} onChange={e => handleUpdateSiteContent('about.img2', e.target.value)} />
+                    <div className="aspect-video bg-black border border-white/5 flex items-center justify-center overflow-hidden">
+                      {siteContent.about.img2 ? <img src={siteContent.about.img2} className="w-full h-full object-cover" /> : <ImageIcon className="text-neutral-800" />}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
-        </div>
-      ) : (
-        <div className="space-y-4">
-          <div className="grid grid-cols-12 gap-4 px-12 py-4 text-[10px] font-bold tracking-[0.4em] uppercase text-white/20 border-b border-white/5">
-            <div className="col-span-1">Order</div>
-            <div className="col-span-4 lg:col-span-5">Project Details</div>
-            <div className="col-span-2 text-center">Ratio</div>
-            <div className="col-span-2 text-center">Category</div>
-            <div className="col-span-1 text-center">Year</div>
-            <div className="col-span-2 lg:col-span-1 text-right">Actions</div>
-          </div>
-          <div className="space-y-2">
-            {projects.map((project, index) => (
-              <div key={project.id} draggable onDragStart={() => handleDragStart(index)} onDragOver={(e) => handleDragOver(e, index)} onDragEnd={() => setDraggedItemIndex(null)} className={`grid grid-cols-12 gap-4 px-6 py-6 items-center bg-white/5 hover:bg-white/10 transition-all border border-white/5 cursor-move ${draggedItemIndex === index ? 'opacity-20 scale-95' : 'opacity-100'}`}>
-                <div className="col-span-1 flex items-center justify-center text-white/10"><GripVertical size={20} /></div>
-                <div className="col-span-4 lg:col-span-5 flex items-center gap-6">
-                  <div className={`h-12 bg-neutral-800 border border-white/10 overflow-hidden ${project.aspectRatio === '9:16' ? 'w-8' : 'w-20'}`}>
-                    <img src={project.thumbnail} className="w-full h-full object-cover grayscale" />
-                  </div>
-                  <div>
-                    <h4 className="text-white font-logo font-bold text-sm lg:text-lg tracking-tight uppercase leading-none mb-1">{project.title}</h4>
-                    <p className="text-white/30 text-[9px] font-bold tracking-widest uppercase">{project.client}</p>
-                  </div>
-                </div>
-                <div className="col-span-2 flex justify-center">
-                  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-sm text-[9px] font-black tracking-widest uppercase border ${project.aspectRatio === '9:16' ? 'text-[#84cc16] border-[#84cc16]/30 bg-[#84cc16]/5' : 'text-blue-400 border-blue-400/30 bg-blue-400/5'}`}>
-                    {project.aspectRatio === '9:16' ? <Smartphone size={12} /> : <Monitor size={12} />} {project.aspectRatio}
-                  </div>
-                </div>
-                <div className="col-span-2 text-center">
-                  <span className="text-[10px] font-bold tracking-widest text-white/40 uppercase bg-black/40 px-3 py-1 border border-white/5">{project.category}</span>
-                </div>
-                <div className="col-span-1 text-center text-white/30 font-bold text-xs tracking-widest">{project.year}</div>
-                <div className="col-span-2 lg:col-span-1 text-right">
-                  <button onClick={(e) => { e.stopPropagation(); handleDeleteProject(project.id); }} className="p-3 text-white/20 hover:text-red-500 transition-all"><Trash2 size={18} /></button>
-                </div>
-              </div>
-            ))}
+          <div className="text-center pt-10 border-t border-white/5">
+            <p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 모든 데이터는 입력 즉시 브라우저 저장소에 동기화됩니다.</p>
           </div>
         </div>
       )}

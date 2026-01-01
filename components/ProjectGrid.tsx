@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Project, Category } from '../types';
 
@@ -14,8 +13,8 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
     : projects.filter(p => p.category === activeCategory);
 
   return (
-    <main className="max-w-full mx-auto px-1 md:px-2 py-2">
-      <div className="columns-1 md:columns-2 xl:columns-3 gap-2 space-y-2">
+    <main className="max-w-full mx-auto px-1 md:px-2 py-4">
+      <div className="columns-1 md:columns-2 xl:columns-3 gap-3 space-y-3">
         {filteredProjects.map((project, idx) => (
           <div
             key={project.id}
@@ -23,44 +22,44 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
             className="break-inside-avoid relative group cursor-pointer animate-fade-up"
             style={{ animationDelay: `${idx * 0.05}s` }}
           >
-            <div className={`relative overflow-hidden bg-black/40 backdrop-blur-md border border-white/5 ${project.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
+            <div className={`relative overflow-hidden bg-black/60 backdrop-blur-md border border-white/5 ${project.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
               <img
                 src={project.thumbnail}
                 alt={project.title}
-                className="w-full h-full object-cover transition-transform duration-[1200ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 opacity-70 group-hover:opacity-100"
+                className="w-full h-full object-cover transition-transform duration-[1500ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-110 opacity-60 group-hover:opacity-100"
               />
               
               {/* Cinematic Hover Overlay */}
-              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-6 text-center">
-                <h3 className="text-black font-logo font-black text-xl md:text-3xl tracking-tighter uppercase mb-2">
+              <div className="absolute inset-0 bg-white opacity-0 group-hover:opacity-100 transition-opacity duration-500 flex flex-col items-center justify-center p-8 text-center">
+                <h3 className="text-black font-logo font-black text-2xl md:text-4xl tracking-tighter uppercase mb-4 leading-none">
                   {project.title}
                 </h3>
-                <p className="text-black/60 text-[10px] font-bold tracking-[0.3em] uppercase">
+                <p className="text-black/50 text-[11px] font-bold tracking-[0.4em] uppercase mb-8">
                   {project.client}
                 </p>
-                <div className="mt-10 px-8 py-3 border border-black text-black text-[10px] font-bold tracking-[0.4em] uppercase hover:bg-black hover:text-white transition-colors">
-                  View Film
+                <div className="px-10 py-4 border-2 border-black text-black text-[12px] font-black tracking-[0.4em] uppercase hover:bg-black hover:text-white transition-all transform group-hover:translate-y-0 translate-y-4">
+                  Explore Film
                 </div>
               </div>
               
               {/* AI Badge */}
               {project.category === 'AI-STUDIO' && (
-                <div className="absolute top-4 right-4 bg-[#84cc16] text-black text-[9px] font-black tracking-widest px-3 py-1 rounded-sm uppercase group-hover:opacity-0 transition-opacity shadow-[0_0_15px_rgba(132,204,22,0.4)]">
+                <div className="absolute top-6 right-6 bg-[#84cc16] text-black text-[10px] font-black tracking-[0.2em] px-4 py-1.5 rounded-sm uppercase group-hover:opacity-0 transition-opacity shadow-[0_0_20px_rgba(132,204,22,0.5)]">
                   AI CORE
                 </div>
               )}
             </div>
             
-            <div className="p-3 flex justify-between items-start group-hover:opacity-0 transition-opacity duration-300">
+            <div className="p-5 flex justify-between items-start group-hover:opacity-0 transition-opacity duration-300">
               <div>
-                <h3 className="text-white font-bold text-[11px] tracking-widest uppercase mb-0.5">
+                <h3 className="text-white font-bold text-[13px] tracking-[0.15em] uppercase mb-1.5">
                   {project.title}
                 </h3>
-                <p className="text-white/30 text-[9px] font-bold tracking-widest uppercase">
+                <p className="text-white/20 text-[10px] font-bold tracking-[0.25em] uppercase">
                   {project.client}
                 </p>
               </div>
-              <span className="text-white/10 text-[9px] font-bold tracking-widest uppercase text-right">
+              <span className="text-white/10 text-[10px] font-bold tracking-[0.3em] uppercase text-right mt-1">
                 {project.category}
               </span>
             </div>

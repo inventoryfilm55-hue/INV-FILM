@@ -31,16 +31,20 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     if (sessionAuth === 'true') setIsAuthenticated(true);
   }, []);
 
-  // Ultimate Google Drive ID Extractor & Converter
+  // Professional G-Drive Image Resolver (Using Thumbnail Endpoint for high compatibility)
   const convertGDriveUrl = (url: string): string => {
     if (!url) return '';
-    // Checks for various ID formats: /file/d/ID/..., ?id=ID, or direct ID strings
-    const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing)([a-zA-Z0-9_-]{25,})/;
+    if (url.startsWith('data:')) return url;
+    
+    // Support all Google Drive URL variants and extract the ID
+    const regex = /(?:\/file\/d\/|id=|folders\/|drive\/u\/\d+\/|sharing\/|uc\?.*?id=)([a-zA-Z0-9_-]{25,})/;
     const match = url.match(regex);
     
     if (match && match[1]) {
+      const fileId = match[1];
       setIsGDriveConverted(true);
-      return `https://drive.google.com/uc?export=view&id=${match[1]}`;
+      // 'sz=w1920' ensures we get a high-quality cinematic frame
+      return `https://drive.google.com/thumbnail?id=${fileId}&sz=w1920`;
     }
     return url;
   };
@@ -123,7 +127,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   };
 
   const saveProject = () => {
-    // Re-verify thumbnail URL before saving to ensure it's converted
     const finalThumbnail = projectFormData.thumbnail ? convertGDriveUrl(projectFormData.thumbnail) : '';
     
     if (editingProjectId) {
@@ -254,13 +257,13 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                               {isGDriveConverted && (
                                 <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30">
                                   <Globe size={12} className="animate-pulse" />
-                                  <span className="text-[8px] font-black tracking-widest uppercase">OPTIMIZED</span>
+                                  <span className="text-[8px] font-black tracking-widest uppercase">STABILIZED</span>
                                 </div>
                               )}
                             </div>
                             <div className="p-4 bg-black/50 border border-white/5 rounded-sm text-[9px] text-neutral-500 uppercase leading-relaxed tracking-widest">
-                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 권한 체크 (필수)</p>
-                               구글 드라이브 이미지 우클릭 > 공유 > <strong className="text-[#84cc16]">[링크가 있는 모든 사용자]</strong>로 변경해야 이미지가 출력됩니다.
+                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 썸네일 엔진 적용</p>
+                               외부 링크 차단을 방지하기 위해 전용 썸네일 엔진 주소를 사용합니다. [공유 설정]이 <strong className="text-[#84cc16]">전체 공개</strong>인지 꼭 확인해 주세요.
                             </div>
                           </div>
                         )}
@@ -302,10 +305,12 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                       {projectFormData.thumbnail ? (
                         <img 
                           src={projectFormData.thumbnail} 
+                          key={projectFormData.thumbnail}
                           onLoad={() => setImageLoadError(false)}
                           onError={() => setImageLoadError(true)}
                           referrerPolicy="no-referrer"
-                          className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-0' : 'opacity-80'}`} 
+                          crossOrigin="anonymous"
+                          className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-0' : 'opacity-80 hover:opacity-100'}`} 
                           alt="Monitor" 
                         />
                       ) : null}
@@ -313,9 +318,9 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                       {(!projectFormData.thumbnail || imageLoadError) && (
                         <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black">
                           {imageLoadError ? <WifiOff size={40} className="text-red-500 mb-4" /> : <ImageIcon size={40} className="text-neutral-800 mb-4" />}
-                          <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Access Blocked' : 'No Signal'}</h6>
+                          <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Signal Blocked' : 'No Signal'}</h6>
                           <p className="text-white/20 text-[8px] uppercase tracking-widest leading-relaxed">
-                            {imageLoadError ? 'Google Drive 공유 설정을\n"모든 사용자"로 변경하세요' : '영상 프레임 대기 중'}
+                            {imageLoadError ? '구글 드라이브 공유 설정을\n"모든 사용자"로 변경하세요' : '영상 프레임 대기 중'}
                           </p>
                         </div>
                       )}
@@ -327,7 +332,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
 
           <div className="grid grid-cols-1 gap-4">
             {projects.map((p, index) => {
-              // Ensure listed items also have converted links
               const displayThumbnail = convertGDriveUrl(p.thumbnail);
               return (
                 <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
@@ -336,7 +340,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                     <button onClick={() => moveProject(index, 'down')} disabled={index === projects.length - 1} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronDown size={20} /></button>
                   </div>
                   <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-                    <img src={displayThumbnail} referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
+                    <img src={displayThumbnail} referrerPolicy="no-referrer" crossOrigin="anonymous" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
                   </div>
                   <div className="flex-grow text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-3 mb-1">

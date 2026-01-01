@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { X, CheckCircle2, ChevronRight, ChevronLeft, Loader2, AlertCircle } from 'lucide-react';
 
@@ -191,7 +190,7 @@ const RequestModal: React.FC<RequestModalProps> = ({ onClose, initialData }) => 
               <button 
                 onClick={step === 3 ? handleSubmit : nextStep}
                 disabled={isSubmitting || (step === 1 ? !form.brandName || !form.service : step === 2 ? !form.budget : (!form.message || !form.email))}
-                className="flex items-center gap-3 text-white bg-white/5 border border-white/20 px-10 py-4 font-bold tracking-[0.2em] text-[10px] uppercase hover:bg-white hover:text-black hover:border-white transition-all disabled:opacity-20 disabled:cursor-not-allowed group min-w-[1800px] justify-center"
+                className="flex items-center gap-3 text-white bg-white/5 border border-white/20 px-10 py-4 font-bold tracking-[0.2em] text-[10px] uppercase hover:bg-white hover:text-black hover:border-white transition-all disabled:opacity-20 disabled:cursor-not-allowed group min-w-[180px] justify-center"
               >
                 {isSubmitting ? (
                   <Loader2 size={14} className="animate-spin" />

@@ -1,7 +1,7 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, PlayCircle } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -19,6 +19,9 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [isAdding, setIsAdding] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
+  
+  const thumbnailInputRef = useRef<HTMLInputElement>(null);
+  const galleryInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
@@ -37,17 +40,14 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     }
   };
 
-  // Improved YouTube URL Extractor (Supports Shorts, Mobile, etc.)
   const getYouTubeEmbedUrl = (url: string) => {
     if (!url) return '';
-    // This regex catches watch?v=, youtu.be/, /embed/, and /shorts/
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
     const match = url.match(regExp);
-
     if (match && match[2].length === 11) {
       return `https://www.youtube.com/embed/${match[2]}`;
     }
-    return url; // Return original if no match, though UI will show warning
+    return url;
   };
 
   const handleVideoUrlChange = (val: string) => {
@@ -55,15 +55,41 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     setProjectFormData({...projectFormData, videoUrl: cleanUrl});
   };
 
-  const handleUpdateSiteContent = (path: string, value: any) => {
-    const keys = path.split('.');
-    const newContent = JSON.parse(JSON.stringify(siteContent));
-    let current = newContent;
-    for (let i = 0; i < keys.length - 1; i++) {
-      current = current[keys[i]];
+  // Image to Base64 Converter
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'thumbnail' | 'gallery') => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+
+    const processFile = (file: File) => {
+      return new Promise<string>((resolve) => {
+        const reader = new FileReader();
+        reader.onloadend = () => resolve(reader.result as string);
+        reader.readAsDataURL(file);
+      });
+    };
+
+    if (type === 'thumbnail') {
+      // Fix: Cast files[0] to File to resolve TypeScript 'unknown' error (line 76)
+      processFile(files[0] as File).then(base64 => {
+        setProjectFormData(prev => ({ ...prev, thumbnail: base64 }));
+      });
+    } else {
+      // Fix: Cast each element to File to resolve TypeScript 'unknown' error in Array.from mapping (line 80)
+      const promises = Array.from(files).map(file => processFile(file as File));
+      Promise.all(promises).then(newImages => {
+        setProjectFormData(prev => ({
+          ...prev,
+          gallery: [...(prev.gallery || []), ...newImages]
+        }));
+      });
     }
-    current[keys[keys.length - 1]] = value;
-    onUpdateContent(newContent);
+  };
+
+  const removeGalleryImage = (index: number) => {
+    setProjectFormData(prev => ({
+      ...prev,
+      gallery: prev.gallery?.filter((_, i) => i !== index)
+    }));
   };
 
   const moveProject = (index: number, direction: 'up' | 'down') => {
@@ -158,6 +184,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                    <h4 className="text-[#84cc16] font-logo font-black text-xl mb-8 uppercase">
                      {editingProjectId ? 'Edit Project' : 'Create New Project'}
                    </h4>
+                   
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                      <div className="space-y-2">
                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Title</label>
@@ -167,10 +194,17 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Client</label>
                        <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} placeholder="Client Name" />
                      </div>
+                     
+                     {/* Improved Thumbnail Section with Upload */}
                      <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Thumbnail URL</label>
-                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.thumbnail || ''} onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} placeholder="Image Link" />
+                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Main Thumbnail</label>
+                       <div className="flex gap-2">
+                         <input className="flex-grow bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none text-xs" value={projectFormData.thumbnail || ''} onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} placeholder="URL or Upload File" />
+                         <input type="file" ref={thumbnailInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'thumbnail')} />
+                         <button onClick={() => thumbnailInputRef.current?.click()} className="px-4 bg-white/10 text-white hover:bg-white/20 transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest"><Upload size={14}/> Upload</button>
+                       </div>
                      </div>
+
                      <div className="space-y-2">
                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest flex items-center justify-between">
                          YouTube Link
@@ -182,11 +216,12 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                        </label>
                        <input 
                          className={`w-full bg-black border p-4 text-white focus:border-[#84cc16] outline-none transition-colors ${isValidYoutube ? 'border-[#84cc16]/30' : 'border-white/10'}`}
+                         value={projectFormData.videoUrl || ''}
                          onChange={e => handleVideoUrlChange(e.target.value)} 
                          placeholder="Paste any YouTube link here" 
                        />
-                       <p className="text-[8px] text-neutral-600 mt-1 uppercase tracking-tight">Support: Normal / Shorts / Mobile / Embed URLs</p>
                      </div>
+
                      <div className="space-y-2">
                         <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Category</label>
                         <select className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.category || 'BRANDED CONTENT'} onChange={e => setProjectFormData({...projectFormData, category: e.target.value as Category})}>
@@ -196,6 +231,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                           <option value="MAKING">MAKING</option>
                         </select>
                      </div>
+
                      <div className="space-y-2">
                         <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Layout Ratio</label>
                         <div className="flex gap-4">
@@ -204,6 +240,26 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                         </div>
                      </div>
                    </div>
+
+                   {/* Gallery Management Section */}
+                   <div className="mt-10 pt-10 border-t border-white/5">
+                      <div className="flex items-center justify-between mb-6">
+                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Visual Stills (Gallery)</label>
+                        <input type="file" ref={galleryInputRef} className="hidden" accept="image/*" multiple onChange={(e) => handleImageUpload(e, 'gallery')} />
+                        <button onClick={() => galleryInputRef.current?.click()} className="px-6 py-3 bg-[#84cc16]/10 text-[#84cc16] hover:bg-[#84cc16] hover:text-black transition-all flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest border border-[#84cc16]/30">
+                          <Plus size={14}/> Add Gallery Images
+                        </button>
+                      </div>
+                      <div className="grid grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-4">
+                        {projectFormData.gallery?.map((img, idx) => (
+                          <div key={idx} className="aspect-square relative group bg-neutral-900 border border-white/5 overflow-hidden">
+                            <img src={img} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt="" />
+                            <button onClick={() => removeGalleryImage(idx)} className="absolute top-1 right-1 p-1.5 bg-red-500 text-white opacity-0 group-hover:opacity-100 transition-opacity"><X size={10}/></button>
+                          </div>
+                        ))}
+                      </div>
+                   </div>
+
                    <div className="flex items-end gap-4 mt-12">
                      <button onClick={saveProject} className="flex-grow py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-2"><Save size={18} /> Save Project</button>
                      <button onClick={() => { setIsAdding(false); setEditingProjectId(null); }} className="px-8 py-5 bg-white/5 text-white hover:bg-white/10 transition-all border border-white/10"><X size={18} /></button>
@@ -259,7 +315,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
         </div>
       ) : (
         <div className="space-y-16 animate-in fade-in slide-in-from-bottom-10">
-          {/* Site Content Tab logic remains same... */}
           <div className="text-center pt-10 border-t border-white/5"><p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 모든 데이터는 입력 즉시 브라우저 저장소에 동기화됩니다.</p></div>
         </div>
       )}

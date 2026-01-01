@@ -1,0 +1,8 @@
+{
+  "name": "INV-FILM Cinematic Experience",
+  "description": "A high-end cinematic digital experience for INV-FILM, featuring a portfolio grid and an interactive AI Creative Lab powered by Gemini.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}

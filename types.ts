@@ -3,7 +3,7 @@ export type Category = 'ALL' | 'BRANDED CONTENT' | 'INTERVIEW' | 'MAKING' | 'AI-
 
 export type AspectRatio = '9:16' | '16:9';
 
-export type View = 'HOME' | 'DIRECTORS' | 'ABOUT' | 'CONTACT';
+export type View = 'HOME' | 'DIRECTORS' | 'ABOUT' | 'CONTACT' | 'ADMIN';
 
 export interface Project {
   id: string;

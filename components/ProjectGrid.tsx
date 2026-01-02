@@ -28,11 +28,12 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
   return (
     <main className="max-w-[2400px] mx-auto px-6 md:px-12 py-12">
       {/* 
-          Refined 2-Column Grid:
-          - Removed decorative lines for maximum minimalism.
-          - Large gap-y to define project blocks naturally.
+          Masonry Layout:
+          - columns-1 for mobile, columns-2 for desktop.
+          - break-inside-avoid ensures projects don't split across columns.
+          - Gap between columns is controlled by gap-x.
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 md:gap-x-16 gap-y-24 md:gap-y-40">
+      <div className="columns-1 md:columns-2 gap-x-12 md:gap-x-20 space-y-24 md:space-y-32">
         {filteredProjects.map((project, idx) => {
           const isVertical = project.aspectRatio === '9:16';
           
@@ -40,7 +41,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
             <div
               key={project.id}
               onClick={() => onProjectClick(project)}
-              className="relative group cursor-pointer animate-fade-up flex flex-col"
+              className="break-inside-avoid relative group cursor-pointer animate-fade-up flex flex-col mb-24 md:mb-40"
               style={{ animationDelay: `${idx * 0.08}s` }}
             >
               {/* Thumbnail Container */}
@@ -58,7 +59,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                     <p className="text-[#84cc16] text-[9px] font-black tracking-[0.6em] uppercase mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
                       INV-FILM INVENTORY
                     </p>
-                    <h3 className="text-white font-logo font-black text-3xl md:text-5xl tracking-tighter uppercase mb-6 leading-none">
+                    <h3 className="text-white font-logo font-black text-2xl md:text-5xl tracking-tighter uppercase mb-6 leading-none">
                       {project.title}
                     </h3>
                     <div className="w-10 h-[1.5px] bg-[#84cc16] mx-auto mb-10 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-200"></div>
@@ -78,7 +79,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
               {/* Project Info - Replicated from Director's provided image */}
               <div className="mt-8 flex justify-between items-start px-1">
                 <div className="space-y-3">
-                  <h4 className="text-white font-logo font-black text-2xl md:text-4xl tracking-tight uppercase leading-none group-hover:text-[#84cc16] transition-colors duration-500">
+                  <h4 className="text-white font-logo font-black text-xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none group-hover:text-[#84cc16] transition-colors duration-500">
                     {project.title}
                   </h4>
                   <p className="text-neutral-600 text-[10px] font-bold tracking-[0.3em] uppercase">

@@ -268,6 +268,15 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Client</label>
                        <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} placeholder="Client Name" />
                      </div>
+
+                     <div className="space-y-2">
+                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director</label>
+                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.director || ''} onChange={e => setProjectFormData({...projectFormData, director: e.target.value})} placeholder="Director Name" />
+                     </div>
+                     <div className="space-y-2">
+                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Production Year</label>
+                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.year || ''} onChange={e => setProjectFormData({...projectFormData, year: e.target.value})} placeholder="e.g. 2024" />
+                     </div>
                      
                      <div className="space-y-2 md:col-span-2">
                         <div className="flex items-center justify-between mb-2">
@@ -410,6 +419,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
         </div>
       ) : (
         <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 pb-20">
+          {/* ... (rest of the file remains the same) */}
           {/* Directors Section Editor */}
           <div className="bg-white/5 border border-white/10 rounded-sm p-10">
             <h4 className="text-white font-logo font-black text-2xl mb-12 uppercase flex items-center gap-4">

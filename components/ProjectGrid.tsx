@@ -28,11 +28,10 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
   return (
     <main className="max-w-[2400px] mx-auto px-4 md:px-8 py-12">
       {/* 
-          Changing from columns-masonry to grid-layout to ensure horizontal sequence flow (#01 Left, #02 Right)
+          Grid layout remains for horizontal sequencing, but we remove the visual numbers per user request.
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-16">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-24">
         {filteredProjects.map((project, idx) => {
-          const sequenceNumber = (idx + 1).toString().padStart(2, '0');
           return (
             <div
               key={project.id}
@@ -40,7 +39,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
               className="relative group cursor-pointer animate-fade-up"
               style={{ animationDelay: `${idx * 0.1}s` }}
             >
-              <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 shadow-2xl transition-all duration-700 group-hover:border-[#84cc16]/30 ${project.aspectRatio === '9:16' ? 'aspect-[9/16] max-w-md mx-auto' : 'aspect-video'}`}>
+              <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 shadow-2xl transition-all duration-700 group-hover:border-[#84cc16]/30 ${project.aspectRatio === '9:16' ? 'aspect-[9/16] w-full' : 'aspect-video w-full'}`}>
                 <img
                   src={resolveThumbnail(project.thumbnail)}
                   alt={project.title}
@@ -48,11 +47,11 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                   className="w-full h-full object-cover transition-transform duration-[2000ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 opacity-70 group-hover:opacity-100"
                 />
                 
-                {/* Premium Overlay Effect */}
+                {/* Premium Overlay Effect - Numbering Removed */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-12 text-center backdrop-blur-[2px]">
                   <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
                     <p className="text-[#84cc16] text-[10px] font-black tracking-[0.6em] uppercase mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
-                      Inventory Film Sequence #{sequenceNumber}
+                      INV-FILM INVENTORY
                     </p>
                     <h3 className="text-white font-logo font-black text-3xl md:text-5xl tracking-tighter uppercase mb-6 leading-none">
                       {project.title}
@@ -64,10 +63,8 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                   </div>
                 </div>
                 
-                {/* Client Label with Sequence Number */}
-                <div className="absolute top-8 left-8 flex items-center gap-4 group-hover:opacity-0 transition-opacity duration-300">
-                  <div className="font-logo font-black text-xl text-[#84cc16] tracking-tighter">#{sequenceNumber}</div>
-                  <div className="h-4 w-[1px] bg-white/20"></div>
+                {/* Minimalist Client Label */}
+                <div className="absolute top-8 left-8 group-hover:opacity-0 transition-opacity duration-300">
                   <span className="text-[9px] font-black tracking-[0.4em] text-white/40 uppercase">
                     {project.client}
                   </span>
@@ -80,24 +77,21 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 )}
               </div>
               
-              {/* Project Info - Integrated Indexing */}
-              <div className="mt-6 flex justify-between items-start px-2 group-hover:opacity-20 transition-opacity duration-500">
-                <div className="space-y-2">
-                  <div className="flex items-center gap-3">
-                    <span className="font-logo font-black text-[#84cc16] text-sm tracking-widest">#{sequenceNumber}</span>
-                    <h4 className="text-white font-logo font-bold text-lg tracking-tight uppercase leading-none">
-                      {project.title}
-                    </h4>
-                  </div>
+              {/* Project Info - Restored to Pure Clean Look */}
+              <div className="mt-8 flex justify-between items-start px-2 group-hover:opacity-20 transition-opacity duration-500">
+                <div className="space-y-3">
+                  <h4 className="text-white font-logo font-bold text-xl tracking-tight uppercase leading-none">
+                    {project.title}
+                  </h4>
                   <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">
                     Directed by {project.director} — {project.year}
                   </p>
                 </div>
                 <div className="text-right">
-                  <span className="block text-[9px] font-black tracking-[0.2em] text-[#84cc16] uppercase mb-1">
+                  <span className="block text-[10px] font-black tracking-[0.2em] text-[#84cc16] uppercase mb-1">
                     {project.category}
                   </span>
-                  <span className="block text-[8px] font-bold tracking-widest text-white/10 uppercase">
+                  <span className="block text-[9px] font-bold tracking-widest text-white/10 uppercase">
                     Format {project.aspectRatio}
                   </span>
                 </div>

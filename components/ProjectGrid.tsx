@@ -28,18 +28,19 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
   return (
     <main className="max-w-[2400px] mx-auto px-4 md:px-8 py-12">
       {/* 
-          Grid layout remains for horizontal sequencing, but we remove the visual numbers per user request.
+          Using columns layout to eliminate black sectors (empty rows) 
+          and fill spaces organically regardless of aspect ratio differences.
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-24">
+      <div className="columns-1 md:columns-2 gap-12 space-y-12 md:space-y-0">
         {filteredProjects.map((project, idx) => {
           return (
             <div
               key={project.id}
               onClick={() => onProjectClick(project)}
-              className="relative group cursor-pointer animate-fade-up"
+              className="relative group cursor-pointer animate-fade-up break-inside-avoid mb-24"
               style={{ animationDelay: `${idx * 0.1}s` }}
             >
-              <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 shadow-2xl transition-all duration-700 group-hover:border-[#84cc16]/30 ${project.aspectRatio === '9:16' ? 'aspect-[9/16] w-full' : 'aspect-video w-full'}`}>
+              <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 shadow-2xl transition-all duration-700 group-hover:border-[#84cc16]/30 w-full ${project.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
                 <img
                   src={resolveThumbnail(project.thumbnail)}
                   alt={project.title}
@@ -47,7 +48,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                   className="w-full h-full object-cover transition-transform duration-[2000ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 opacity-70 group-hover:opacity-100"
                 />
                 
-                {/* Premium Overlay Effect - Numbering Removed */}
+                {/* Premium Overlay Effect */}
                 <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-12 text-center backdrop-blur-[2px]">
                   <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
                     <p className="text-[#84cc16] text-[10px] font-black tracking-[0.6em] uppercase mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
@@ -77,8 +78,8 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 )}
               </div>
               
-              {/* Project Info - Restored to Pure Clean Look */}
-              <div className="mt-8 flex justify-between items-start px-2 group-hover:opacity-20 transition-opacity duration-500">
+              {/* Project Info - Pure Clean Look */}
+              <div className="mt-8 flex justify-between items-start px-2 group-hover:opacity-20 transition-opacity duration-500 w-full">
                 <div className="space-y-3">
                   <h4 className="text-white font-logo font-bold text-xl tracking-tight uppercase leading-none">
                     {project.title}

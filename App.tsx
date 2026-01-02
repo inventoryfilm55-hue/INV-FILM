@@ -152,7 +152,35 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Footer removed for high-end minimalist cinematic wall feel */}
+      {/* Restored Footer for Admin and Brand contents */}
+      <footer className="py-24 border-t border-white/5 mt-20 px-8 md:px-12 bg-black/20">
+        <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-16 md:gap-0">
+          <div className="flex flex-col items-center md:items-start gap-4">
+            <h2 className="font-logo text-3xl font-black tracking-tighter text-white">INV FILM</h2>
+            <p className="text-[10px] text-neutral-600 font-bold tracking-[0.5em] uppercase">Inventory Archive — 2025</p>
+          </div>
+          
+          <div className="flex flex-wrap justify-center gap-10 md:gap-16 text-[11px] font-bold tracking-[0.4em] uppercase text-neutral-500">
+            <a href="https://instagram.com/inventory_film" target="_blank" className="hover:text-[#84cc16] transition-colors">Instagram</a>
+            <a href="#" className="hover:text-[#84cc16] transition-colors">Kakao</a>
+            <button 
+              onClick={() => setCurrentView('ADMIN')} 
+              className={`hover:text-[#84cc16] transition-colors ${currentView === 'ADMIN' ? 'text-[#84cc16]' : ''}`}
+            >
+              Admin Access
+            </button>
+          </div>
+
+          <div className="flex flex-col items-center md:items-end gap-2">
+            <p className="text-[9px] text-neutral-700 font-bold tracking-widest uppercase">
+              © All Rights Reserved. INV-FILM Production.
+            </p>
+            <p className="text-[8px] text-neutral-800 font-black tracking-widest uppercase">
+              Seoul Hub — Global Vision
+            </p>
+          </div>
+        </div>
+      </footer>
       
       {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
       {isAIOpen && <AICreativeLab onClose={() => setIsAIOpen(false)} onConnectIdea={handleConnectIdea} />}

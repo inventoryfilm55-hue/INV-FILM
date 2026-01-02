@@ -117,7 +117,7 @@ const App: React.FC = () => {
   }
 
   return (
-    <div className="min-h-screen pt-[160px] lg:pt-[85px]">
+    <div className="min-h-screen pt-[160px] lg:pt-[85px] bg-[#050505]">
       <Header 
         onOpenAI={() => setIsAIOpen(true)}
         onOpenRequest={() => setIsRequestOpen(true)}
@@ -152,19 +152,8 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="max-w-[1800px] mx-auto px-12 py-40 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-16">
-        <h2 className="font-logo text-4xl font-black tracking-tighter text-white cursor-pointer hover:text-[#84cc16] transition-colors" onClick={() => setCurrentView('HOME')}>INV FILM</h2>
-        <div className="flex flex-wrap justify-center gap-8 md:gap-16 text-[12px] font-bold tracking-[0.4em] uppercase text-neutral-600">
-          <button onClick={() => setCurrentView('ADMIN')} className="hover:text-white transition-colors">Admin Console</button>
-          <a href="https://instagram.com/inventory_film" target="_blank" className="hover:text-white transition-colors">Instagram</a>
-          <a href="#" className="hover:text-white transition-colors">Kakao</a>
-          <a href="#" className="hover:text-white transition-colors">Vimeo</a>
-        </div>
-        <p className="text-[11px] font-bold tracking-[0.5em] text-neutral-700 uppercase">
-          © 2024 INV-FILM PRODUCTION HOUSE
-        </p>
-      </footer>
-
+      {/* Footer removed for high-end minimalist cinematic wall feel */}
+      
       {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
       {isAIOpen && <AICreativeLab onClose={() => setIsAIOpen(false)} onConnectIdea={handleConnectIdea} />}
       {isRequestOpen && <RequestModal onClose={() => { setIsRequestOpen(false); setInitialRequestData(null); }} initialData={initialRequestData} />}

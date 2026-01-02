@@ -36,7 +36,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           <X size={40} strokeWidth={1.5} />
         </button>
 
-        {/* Video Player - Size increased by 1.5x (9:16 now 680px max) */}
+        {/* Video Player */}
         <div className={`w-full bg-neutral-900 mb-20 shadow-[0_30px_100px_rgba(0,0,0,0.8)] overflow-hidden rounded-sm relative transition-all duration-700
           ${project.aspectRatio === '9:16' ? 'max-w-[680px] aspect-[9/16]' : 'max-w-[1500px] aspect-video'}
         `}>
@@ -49,14 +49,13 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           ></iframe>
         </div>
 
-        {/* Project Content - Single Column Stacked Layout */}
-        <div className="max-w-[1000px] w-full space-y-20 animate-fade-up">
+        {/* Project Content */}
+        <div className="max-w-[1000px] w-full space-y-20 animate-fade-up pb-40">
           
-          {/* Main Title & Description */}
           <div className="text-center space-y-10">
             <div className="space-y-4">
               <p className="text-[#84cc16] text-[12px] font-black tracking-[0.6em] uppercase">Inventory Archive</p>
-              <h2 className="font-logo text-6xl md:text-8xl font-black text-white tracking-tighter uppercase leading-[0.85]">
+              <h2 className="font-logo text-6xl md:text-[clamp(40px,8vw,120px)] font-black text-white tracking-tighter uppercase leading-[0.85] break-words">
                 {project.title}
               </h2>
             </div>
@@ -68,7 +67,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
             </p>
           </div>
 
-          {/* Metadata Grid - Balanced Horizontal Flow */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12 py-16 border-y border-white/5">
             <div className="flex flex-col items-center gap-4 text-center group">
               <Briefcase size={20} className="text-[#84cc16]/50 group-hover:text-[#84cc16] transition-colors" />
@@ -94,17 +92,6 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
               </div>
             </div>
           </div>
-
-          {/* Footer of Modal */}
-          <div className="pt-20 pb-40 text-center">
-            <button 
-              onClick={onClose}
-              className="px-16 py-6 border border-white/10 text-white/40 hover:text-white hover:border-white transition-all font-logo font-black tracking-[0.4em] uppercase text-xs"
-            >
-              Return to Inventory
-            </button>
-          </div>
-
         </div>
       </div>
     </div>

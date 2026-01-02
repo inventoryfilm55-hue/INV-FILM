@@ -28,11 +28,11 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
   return (
     <main className="max-w-[2400px] mx-auto px-4 md:px-8 py-12">
       {/* 
-          Restored Masonry Layout:
-          Eliminates empty black sectors by stacking items vertically in columns.
-          Works best with mixed aspect ratios (9:16 and 16:9).
+          Refined Masonry Layout:
+          - Increased column gap for better separation.
+          - Significant bottom margin on project items to prevent ambiguity.
       */}
-      <div className="columns-1 md:columns-2 gap-12 space-y-12 md:space-y-0">
+      <div className="columns-1 md:columns-2 gap-16 md:gap-24">
         {filteredProjects.map((project, idx) => {
           const isVertical = project.aspectRatio === '9:16';
           
@@ -40,9 +40,10 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
             <div
               key={project.id}
               onClick={() => onProjectClick(project)}
-              className="relative group cursor-pointer animate-fade-up break-inside-avoid mb-24"
+              className="relative group cursor-pointer animate-fade-up break-inside-avoid mb-48 md:mb-64"
               style={{ animationDelay: `${idx * 0.1}s` }}
             >
+              {/* Thumbnail Container */}
               <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 shadow-2xl transition-all duration-700 group-hover:border-[#84cc16]/30 w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'}`}>
                 <img
                   src={resolveThumbnail(project.thumbnail)}
@@ -81,17 +82,17 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 )}
               </div>
               
-              {/* Project Info */}
-              <div className="mt-8 flex justify-between items-start px-2 group-hover:opacity-20 transition-opacity duration-500 w-full">
-                <div className="space-y-3">
-                  <h4 className="text-white font-logo font-bold text-xl md:text-2xl tracking-tight uppercase leading-none">
+              {/* Project Info - Tightened to the image (mt-6) */}
+              <div className="mt-6 flex justify-between items-start px-1 group-hover:opacity-20 transition-opacity duration-500 w-full">
+                <div className="space-y-3 flex-1 pr-6">
+                  <h4 className="text-white font-logo font-bold text-xl md:text-3xl tracking-tight uppercase leading-tight">
                     {project.title}
                   </h4>
                   <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">
                     Directed by {project.director} — {project.year}
                   </p>
                 </div>
-                <div className="text-right">
+                <div className="text-right shrink-0 pt-1">
                   <span className="block text-[10px] font-black tracking-[0.2em] text-[#84cc16] uppercase mb-1">
                     {project.category}
                   </span>
@@ -100,6 +101,9 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                   </span>
                 </div>
               </div>
+
+              {/* End of Project Visual Separator */}
+              <div className="mt-12 w-full h-[1px] bg-white/5 group-hover:bg-[#84cc16]/20 transition-colors duration-500"></div>
             </div>
           );
         })}

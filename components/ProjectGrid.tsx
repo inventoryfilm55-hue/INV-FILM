@@ -28,12 +28,11 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
   return (
     <main className="max-w-[2400px] mx-auto px-4 md:px-8 py-12">
       {/* 
-          Editorial Grid System:
-          - 16:9 projects take full row (2 columns) for cinematic impact.
-          - 9:16 projects take half row (1 column) for editorial verticality.
-          - No sequence numbers as requested.
+          Restored Masonry Layout:
+          Eliminates empty black sectors by stacking items vertically in columns.
+          Works best with mixed aspect ratios (9:16 and 16:9).
       */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-x-12 gap-y-32">
+      <div className="columns-1 md:columns-2 gap-12 space-y-12 md:space-y-0">
         {filteredProjects.map((project, idx) => {
           const isVertical = project.aspectRatio === '9:16';
           
@@ -41,7 +40,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
             <div
               key={project.id}
               onClick={() => onProjectClick(project)}
-              className={`relative group cursor-pointer animate-fade-up ${isVertical ? 'md:col-span-1' : 'md:col-span-2'}`}
+              className="relative group cursor-pointer animate-fade-up break-inside-avoid mb-24"
               style={{ animationDelay: `${idx * 0.1}s` }}
             >
               <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 shadow-2xl transition-all duration-700 group-hover:border-[#84cc16]/30 w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'}`}>
@@ -58,7 +57,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                     <p className="text-[#84cc16] text-[10px] font-black tracking-[0.6em] uppercase mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
                       INV-FILM INVENTORY
                     </p>
-                    <h3 className={`text-white font-logo font-black tracking-tighter uppercase mb-6 leading-none ${isVertical ? 'text-3xl md:text-5xl' : 'text-3xl md:text-6xl lg:text-7xl'}`}>
+                    <h3 className="text-white font-logo font-black text-3xl md:text-5xl tracking-tighter uppercase mb-6 leading-none">
                       {project.title}
                     </h3>
                     <div className="w-12 h-[2px] bg-[#84cc16] mx-auto mb-10 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-200"></div>
@@ -82,7 +81,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 )}
               </div>
               
-              {/* Project Info - Pure Minimalist (No numbering) */}
+              {/* Project Info */}
               <div className="mt-8 flex justify-between items-start px-2 group-hover:opacity-20 transition-opacity duration-500 w-full">
                 <div className="space-y-3">
                   <h4 className="text-white font-logo font-bold text-xl md:text-2xl tracking-tight uppercase leading-none">

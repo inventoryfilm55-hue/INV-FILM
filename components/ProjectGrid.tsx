@@ -26,14 +26,13 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
   };
 
   return (
-    <main className="max-w-[2400px] mx-auto px-6 md:px-12 py-12">
+    <main className="max-w-[2400px] mx-auto px-0.5 md:px-1 py-1">
       {/* 
-          Masonry Layout:
-          - columns-1 for mobile, columns-2 for desktop.
-          - break-inside-avoid ensures projects don't split across columns.
-          - Gap between columns is controlled by gap-x.
+          Ultra-Tight Visual Wall Masonry:
+          - columns-2 for mobile to keep density, or columns-1 if you prefer single view.
+          - gap is kept at 0.5 (approx 2px) to 1 (4px).
       */}
-      <div className="columns-1 md:columns-2 gap-x-12 md:gap-x-20 space-y-24 md:space-y-32">
+      <div className="columns-1 md:columns-2 gap-0.5 md:gap-1 space-y-0.5 md:space-y-1">
         {filteredProjects.map((project, idx) => {
           const isVertical = project.aspectRatio === '9:16';
           
@@ -41,59 +40,49 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
             <div
               key={project.id}
               onClick={() => onProjectClick(project)}
-              className="break-inside-avoid relative group cursor-pointer animate-fade-up flex flex-col mb-24 md:mb-40"
-              style={{ animationDelay: `${idx * 0.08}s` }}
+              className="break-inside-avoid relative group cursor-pointer animate-fade-up flex flex-col mb-0.5 md:mb-1"
+              style={{ animationDelay: `${idx * 0.05}s` }}
             >
               {/* Thumbnail Container */}
-              <div className={`relative overflow-hidden bg-neutral-900 border border-white/5 transition-all duration-700 group-hover:border-[#84cc16]/30 w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'}`}>
+              <div className={`relative overflow-hidden bg-neutral-900 transition-all duration-700 w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'}`}>
                 <img
                   src={resolveThumbnail(project.thumbnail)}
                   alt={project.title}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform duration-[2000ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 opacity-70 group-hover:opacity-100"
+                  className="w-full h-full object-cover transition-transform duration-[2000ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 opacity-90 group-hover:opacity-100"
                 />
                 
-                {/* Premium Overlay Effect */}
-                <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-12 text-center backdrop-blur-[2px]">
-                  <div className="translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
-                    <p className="text-[#84cc16] text-[9px] font-black tracking-[0.6em] uppercase mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
-                      INV-FILM INVENTORY
+                {/* Responsive Premium Overlay */}
+                <div className="absolute inset-0 bg-black/70 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-6 md:p-12 text-center backdrop-blur-[6px]">
+                  <div className="w-full max-w-[90%] flex flex-col items-center translate-y-4 group-hover:translate-y-0 transition-transform duration-700">
+                    
+                    <p className="text-[#84cc16] text-[max(8px,0.6vw)] font-black tracking-[0.5em] uppercase mb-3 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
+                      {project.category}
                     </p>
-                    <h3 className="text-white font-logo font-black text-2xl md:text-5xl tracking-tighter uppercase mb-6 leading-none">
+                    
+                    {/* Title with Responsive Scaling (Fluid Typography) */}
+                    <h3 className="text-white font-logo font-black text-[7vw] md:text-[4vw] lg:text-[3.5vw] xl:text-[3vw] leading-[0.85] tracking-tighter uppercase mb-6 break-words w-full">
                       {project.title}
                     </h3>
-                    <div className="w-10 h-[1.5px] bg-[#84cc16] mx-auto mb-10 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-200"></div>
-                    <div className="inline-block px-10 py-4 border border-white text-white text-[10px] font-black tracking-[0.5em] uppercase hover:bg-white hover:text-black transition-all">
-                      Open Film
+                    
+                    <div className="w-12 h-[1px] bg-white/20 mb-6 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-200"></div>
+                    
+                    <p className="text-white/40 text-[max(9px,0.7vw)] font-bold tracking-[0.3em] uppercase mb-8 opacity-0 group-hover:opacity-100 transition-opacity delay-300">
+                      Directed by {project.director} — {project.year}
+                    </p>
+                    
+                    <div className="inline-block px-6 py-3 border border-white/20 text-white text-[8px] md:text-[10px] font-black tracking-[0.4em] uppercase hover:bg-white hover:text-black hover:border-white transition-all">
+                      View Film
                     </div>
                   </div>
                 </div>
 
+                {/* Subtle AI Indicator */}
                 {project.category === 'AI-STUDIO' && (
-                  <div className="absolute top-6 right-6 bg-[#84cc16] text-black text-[8px] font-black tracking-[0.2em] px-3 py-1.5 rounded-sm uppercase group-hover:opacity-0 transition-opacity shadow-[0_0_20px_rgba(132,204,22,0.4)]">
+                  <div className="absolute top-4 right-4 bg-[#84cc16] text-black text-[7px] font-black tracking-[0.1em] px-2 py-1 rounded-sm uppercase group-hover:opacity-0 transition-opacity pointer-events-none">
                     AI CORE
                   </div>
                 )}
-              </div>
-              
-              {/* Project Info - Replicated from Director's provided image */}
-              <div className="mt-8 flex justify-between items-start px-1">
-                <div className="space-y-3">
-                  <h4 className="text-white font-logo font-black text-xl md:text-3xl lg:text-4xl tracking-tight uppercase leading-none group-hover:text-[#84cc16] transition-colors duration-500">
-                    {project.title}
-                  </h4>
-                  <p className="text-neutral-600 text-[10px] font-bold tracking-[0.3em] uppercase">
-                    Directed by {project.director} — {project.year}
-                  </p>
-                </div>
-                <div className="text-right shrink-0">
-                  <span className="block text-[10px] font-black tracking-[0.2em] text-[#84cc16] uppercase mb-1.5">
-                    {project.category}
-                  </span>
-                  <span className="block text-[9px] font-bold tracking-widest text-white/10 uppercase">
-                    Format {project.aspectRatio}
-                  </span>
-                </div>
               </div>
             </div>
           );
@@ -103,7 +92,7 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
       {filteredProjects.length === 0 && (
         <div className="py-40 text-center">
           <p className="text-neutral-700 font-logo font-black text-2xl uppercase tracking-[0.5em] animate-pulse">
-            No projects in this archive
+            Empty Inventory
           </p>
         </div>
       )}

@@ -55,8 +55,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           <div className="text-center space-y-12">
             <div className="space-y-6 px-4">
               <p className="text-[#84cc16] text-[10px] md:text-[13px] font-black tracking-[0.7em] uppercase">Inventory Archive</p>
-              {/* text-balance for perfect line distribution in modal title */}
-              <h2 className="font-logo text-white font-black text-[clamp(2.5rem,9vw,8.5rem)] leading-[0.85] tracking-tighter uppercase break-keep text-balance w-full">
+              {/* Refined responsive title to prevent cutoff in modal */}
+              <h2 className="font-logo text-white font-black text-[clamp(2rem,10vw,8.5rem)] leading-[0.85] tracking-tighter uppercase break-words hyphens-auto text-balance w-full">
                 {project.title}
               </h2>
             </div>
@@ -73,7 +73,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
               <Briefcase size={22} className="text-[#84cc16]/50 group-hover:text-[#84cc16] transition-colors" />
               <div>
                 <p className="text-[10px] text-neutral-600 uppercase tracking-widest font-black mb-2">Client Entity</p>
-                <p className="text-white font-logo tracking-[0.2em] text-lg md:text-2xl uppercase">{project.client}</p>
+                <p className="text-white font-logo tracking-[0.2em] text-lg md:text-2xl uppercase break-keep">{project.client}</p>
               </div>
             </div>
             
@@ -81,7 +81,7 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
               <User size={22} className="text-[#84cc16]/50 group-hover:text-[#84cc16] transition-colors" />
               <div>
                 <p className="text-[10px] text-neutral-600 uppercase tracking-widest font-black mb-2">Direction</p>
-                <p className="text-white font-logo tracking-[0.2em] text-lg md:text-2xl uppercase">{project.director}</p>
+                <p className="text-white font-logo tracking-[0.2em] text-lg md:text-2xl uppercase break-keep">{project.director}</p>
               </div>
             </div>
             

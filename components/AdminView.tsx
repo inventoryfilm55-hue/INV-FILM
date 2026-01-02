@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle, GripVertical } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -15,6 +15,9 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<'FILMS' | 'SITE_CONTENT'>('FILMS');
+  
+  // Drag and Drop State
+  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   
   // Project State
   const [isAdding, setIsAdding] = useState(false);
@@ -56,17 +59,12 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     }
   };
 
-  // Improved G-Drive Image Resolver using the robust lh3 proxy
   const convertGDriveUrl = (url: string): string => {
     if (!url) return '';
     if (url.startsWith('data:')) return url;
-    
-    // Regular expression to catch IDs from various G-Drive link formats
     const regex = /(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/;
     const match = url.match(regex);
-    
     if (match && match[1]) {
-      // Use lh3.googleusercontent.com which is the most reliable way to bypass browser CORS/Referrer issues for <img> tags
       return `https://lh3.googleusercontent.com/d/${match[1]}`;
     }
     return url;
@@ -115,14 +113,29 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     }
   };
 
-  const moveProject = (index: number, direction: 'up' | 'down') => {
+  // Drag and Drop Handlers
+  const handleDragStart = (e: React.DragEvent, index: number) => {
+    setDraggedIndex(index);
+    e.dataTransfer.effectAllowed = "move";
+    // Set dummy data for Firefox compatibility
+    e.dataTransfer.setData("text/plain", index.toString());
+  };
+
+  const handleDragOver = (e: React.DragEvent, index: number) => {
+    e.preventDefault();
+    if (draggedIndex === null || draggedIndex === index) return;
+
     const newProjects = [...projects];
-    const targetIndex = direction === 'up' ? index - 1 : index + 1;
-    if (targetIndex < 0 || targetIndex >= newProjects.length) return;
-    const temp = newProjects[index];
-    newProjects[index] = newProjects[targetIndex];
-    newProjects[targetIndex] = temp;
+    const itemToMove = newProjects[draggedIndex];
+    newProjects.splice(draggedIndex, 1);
+    newProjects.splice(index, 0, itemToMove);
+    
+    setDraggedIndex(index);
     onUpdateProjects(newProjects);
+  };
+
+  const handleDragEnd = () => {
+    setDraggedIndex(null);
   };
 
   const startEditing = (project: Project) => {
@@ -160,7 +173,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   };
 
   const saveSiteContent = () => {
-    // Normalize images in site content using the robust resolver
     const normalizedContent = {
       ...tempContent,
       about: {
@@ -393,21 +405,28 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
             {projects.map((p, index) => {
               const displayThumbnail = convertGDriveUrl(p.thumbnail);
               const sequenceNumber = (index + 1).toString().padStart(2, '0');
+              const isDragging = draggedIndex === index;
+
               return (
-                <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all relative">
+                <div 
+                  key={p.id} 
+                  draggable
+                  onDragStart={(e) => handleDragStart(e, index)}
+                  onDragOver={(e) => handleDragOver(e, index)}
+                  onDragEnd={handleDragEnd}
+                  className={`group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border transition-all relative cursor-move
+                    ${isDragging ? 'opacity-40 border-[#84cc16] scale-[0.98]' : 'hover:border-[#84cc16]/30 border-white/5'}
+                  `}
+                >
                   
-                  {/* Sequence Position Badge */}
-                  <div className="flex flex-col items-center justify-center px-4 border-r border-white/5 h-full">
+                  {/* Drag Handle & Sequence Position Badge */}
+                  <div className="flex flex-col items-center justify-center px-4 border-r border-white/5 h-full min-w-[80px]">
+                    <GripVertical size={16} className="text-neutral-700 mb-2 group-hover:text-[#84cc16] transition-colors" />
                     <span className="text-[10px] font-black text-neutral-600 uppercase tracking-widest mb-1">Pos</span>
                     <span className="font-logo font-black text-3xl text-[#84cc16]">#{sequenceNumber}</span>
                   </div>
 
-                  <div className="flex flex-row md:flex-col gap-2">
-                    <button onClick={() => moveProject(index, 'up')} disabled={index === 0} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronUp size={20} /></button>
-                    <button onClick={() => moveProject(index, 'down')} disabled={index === projects.length - 1} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronDown size={20} /></button>
-                  </div>
-
-                  <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
+                  <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden shrink-0 ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
                     <img src={displayThumbnail} referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
                   </div>
 
@@ -427,6 +446,14 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
                 </div>
               );
             })}
+          </div>
+          
+          <div className="text-center py-10 opacity-30 select-none">
+            <p className="text-[10px] font-black tracking-[0.5em] uppercase flex items-center justify-center gap-4">
+               <span className="w-8 h-[1px] bg-white"></span>
+               DRAG & DROP TO REORDER INVENTORY
+               <span className="w-8 h-[1px] bg-white"></span>
+            </p>
           </div>
         </div>
       ) : (

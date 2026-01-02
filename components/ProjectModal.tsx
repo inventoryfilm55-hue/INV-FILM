@@ -55,8 +55,8 @@ const ProjectModal: React.FC<ProjectModalProps> = ({ project, onClose }) => {
           <div className="text-center space-y-12">
             <div className="space-y-6 px-4">
               <p className="text-[#84cc16] text-[10px] md:text-[13px] font-black tracking-[0.7em] uppercase">Inventory Archive</p>
-              {/* Refined responsive title to prevent cutoff in modal */}
-              <h2 className="font-logo text-white font-black text-[clamp(2rem,10vw,8.5rem)] leading-[0.85] tracking-tighter uppercase break-words hyphens-auto text-balance w-full">
+              {/* Reduced size in modal for better readability on long titles */}
+              <h2 className="font-logo text-white font-black text-[clamp(1.75rem,8vw,5.5rem)] leading-[0.9] tracking-tighter uppercase break-words hyphens-auto text-balance w-full">
                 {project.title}
               </h2>
             </div>

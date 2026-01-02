@@ -47,30 +47,28 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
                 />
                 
                 {/* 
-                    Responsive Safe Overlay
-                    - p-6 on mobile to give more space for text
-                    - backdrop-blur for premium feel
+                    Refined Overlay padding for better text containment
                 */}
-                <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-6 md:p-12 text-center backdrop-blur-[12px]">
+                <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-8 md:p-16 text-center backdrop-blur-[12px]">
                   <div className="w-full max-w-full flex flex-col items-center translate-y-6 group-hover:translate-y-0 transition-all duration-700">
                     
-                    <p className="text-[#84cc16] text-[max(8px,0.5vw)] font-black tracking-[0.5em] uppercase mb-4 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
+                    <p className="text-[#84cc16] text-[max(8px,0.5vw)] font-black tracking-[0.6em] uppercase mb-5 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
                       {project.category}
                     </p>
                     
                     {/* 
-                        Anti-Cutoff Typography Engine:
-                        - text-[clamp(1.25rem,10vw,5.5rem)]: Scales aggressively but safely
-                        - break-words & hyphens-auto: Emergency word breaking to prevent horizontal overflow
-                        - text-balance: Keeps lines aesthetically distributed
+                        Optimized Font Sizing:
+                        - Desktop: Scaled down from 6.5rem to max 4.5rem
+                        - Mobile: Scaled down to prevent single-word overflow
+                        - leading-[0.9]: Added slight vertical breathing room
                     */}
-                    <h3 className="text-white font-logo font-black text-[clamp(1.25rem,9vw,5.5rem)] md:text-[clamp(2.5rem,4.5vw,6.5rem)] leading-[0.8] tracking-tighter uppercase mb-6 break-words hyphens-auto text-balance w-full overflow-hidden">
+                    <h3 className="text-white font-logo font-black text-[clamp(1.25rem,7vw,3.5rem)] md:text-[clamp(2rem,3.5vw,4.5rem)] leading-[0.9] tracking-tighter uppercase mb-8 break-words hyphens-auto text-balance w-full overflow-hidden">
                       {project.title}
                     </h3>
                     
-                    <div className="w-12 md:w-20 h-[1px] bg-white/20 mb-6 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-200"></div>
+                    <div className="w-12 md:w-20 h-[1px] bg-white/20 mb-8 scale-x-0 group-hover:scale-x-100 transition-transform duration-700 delay-200"></div>
                     
-                    <p className="text-white/40 text-[max(8px,0.6vw)] font-bold tracking-[0.3em] uppercase opacity-0 group-hover:opacity-100 transition-opacity delay-300 whitespace-nowrap">
+                    <p className="text-white/40 text-[max(8px,0.6vw)] font-bold tracking-[0.4em] uppercase opacity-0 group-hover:opacity-100 transition-opacity delay-300 whitespace-nowrap">
                       Dir. {project.director} — {project.year}
                     </p>
                   </div>

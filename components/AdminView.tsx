@@ -199,7 +199,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
               type="submit" 
               className={`w-full py-5 font-logo font-black tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${authError ? 'bg-red-500 text-white' : 'bg-[#84cc16] text-black hover:bg-white'}`}
             >
-              {authError ? 'Retry' : 'Authorize'} <ArrowRight size={18} />
+              {authError ? 'Authorize' : 'Authorize'} <ArrowRight size={18} />
             </button>
           </form>
 
@@ -392,22 +392,34 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
           <div className="grid grid-cols-1 gap-4">
             {projects.map((p, index) => {
               const displayThumbnail = convertGDriveUrl(p.thumbnail);
+              const sequenceNumber = (index + 1).toString().padStart(2, '0');
               return (
-                <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
+                <div key={p.id} className="group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all relative">
+                  
+                  {/* Sequence Position Badge */}
+                  <div className="flex flex-col items-center justify-center px-4 border-r border-white/5 h-full">
+                    <span className="text-[10px] font-black text-neutral-600 uppercase tracking-widest mb-1">Pos</span>
+                    <span className="font-logo font-black text-3xl text-[#84cc16]">#{sequenceNumber}</span>
+                  </div>
+
                   <div className="flex flex-row md:flex-col gap-2">
                     <button onClick={() => moveProject(index, 'up')} disabled={index === 0} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronUp size={20} /></button>
                     <button onClick={() => moveProject(index, 'down')} disabled={index === projects.length - 1} className="p-1.5 text-white/20 hover:text-[#84cc16] disabled:opacity-0 transition-colors"><ChevronDown size={20} /></button>
                   </div>
+
                   <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
                     <img src={displayThumbnail} referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
                   </div>
+
                   <div className="flex-grow text-center md:text-left">
                     <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
                       <h4 className="text-white font-logo font-bold text-lg uppercase tracking-tight">{p.title}</h4>
                       <span className="text-[8px] px-2 py-0.5 bg-white/10 text-white/40 font-black rounded-sm">{p.aspectRatio}</span>
                     </div>
                     <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">{p.client} — {p.category}</p>
+                    <p className="text-[#84cc16]/40 text-[9px] font-black tracking-[0.2em] uppercase mt-1">Dir. {p.director} • {p.year}</p>
                   </div>
+
                   <div className="flex items-center gap-3">
                     <button onClick={() => startEditing(p)} className="p-3 bg-white/5 text-white hover:bg-[#84cc16] hover:text-black transition-all rounded-sm"><Edit3 size={18} /></button>
                     <button onClick={() => { if(window.confirm('Delete this project?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 bg-white/5 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-sm"><Trash2 size={18} /></button>
@@ -419,7 +431,6 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
         </div>
       ) : (
         <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 pb-20">
-          {/* ... (rest of the file remains the same) */}
           {/* Directors Section Editor */}
           <div className="bg-white/5 border border-white/10 rounded-sm p-10">
             <h4 className="text-white font-logo font-black text-2xl mb-12 uppercase flex items-center gap-4">

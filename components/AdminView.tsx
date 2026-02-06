@@ -22,6 +22,7 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [tempContent, setTempContent] = useState<SiteContent>(siteContent);
   const [productionCode, setProductionCode] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
+  const [urlCopySuccess, setUrlCopySuccess] = useState(false);
 
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
@@ -54,6 +55,13 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
     navigator.clipboard.writeText(code.trim());
     setCopySuccess(true);
     setTimeout(() => setCopySuccess(false), 2000);
+  };
+
+  const handleCopySiteUrl = () => {
+    const siteUrl = "https://www.inventoryfilm.com";
+    navigator.clipboard.writeText(siteUrl);
+    setUrlCopySuccess(true);
+    setTimeout(() => setUrlCopySuccess(false), 2000);
   };
 
   const convertGDriveUrl = (url: string): string => {
@@ -122,6 +130,26 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
       {/* SYSTEM TAB */}
       {activeTab === 'SYSTEM' && (
         <div className="max-w-4xl space-y-12 animate-fade-up pb-40">
+          
+          {/* Site Health & Info */}
+          <div className="bg-neutral-900/50 border border-white/10 p-10 rounded-sm">
+            <div className="flex items-center gap-4 mb-6">
+              <LinkIcon className="text-[#84cc16]" size={24} />
+              <h3 className="text-xl font-logo font-black text-white uppercase tracking-tighter">Site Integration</h3>
+            </div>
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="flex-grow">
+                <p className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest mb-2">Production URL</p>
+                <div className="text-white font-mono text-sm bg-black p-4 border border-white/5 flex items-center justify-between">
+                  https://www.inventoryfilm.com
+                  <button onClick={handleCopySiteUrl} className="text-[#84cc16] hover:text-white transition-colors">
+                    {urlCopySuccess ? <CheckCircle size={18} /> : <Copy size={18} />}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Cache Busting Section */}
           <div className="bg-neutral-900/50 border border-white/10 p-10 rounded-sm">
             <div className="flex items-center gap-4 mb-6">
@@ -129,7 +157,8 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
               <h3 className="text-xl font-logo font-black text-white uppercase tracking-tighter">Cache Clearing Tools</h3>
             </div>
             <p className="text-neutral-400 text-xs leading-relaxed mb-8">
-              도메인 연결 후 카카오톡이나 네이버에 주소를 보냈을 때 예전 이미지가 뜬다면, 아래 도구들을 사용해 해당 플랫폼의 기억을 지워야 합니다.
+              도메인 연결 후 카카오톡이나 네이버에 주소를 보냈을 때 예전 이미지가 뜬다면, 아래 도구들을 사용해 해당 플랫폼의 기억을 지워야 합니다.<br/>
+              <b>방법:</b> 사이트 URL을 복사한 후, 아래 링크를 열어 "URL" 입력창에 붙여넣고 초기화(제출)를 누르세요.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <a 
@@ -139,7 +168,7 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
               >
                 <div className="flex items-center gap-4">
                   <MessageSquare size={20} />
-                  <span className="font-bold tracking-widest uppercase text-xs">Kakao Cache Clear</span>
+                  <span className="font-bold tracking-widest uppercase text-xs">Kakao Cache Tool</span>
                 </div>
                 <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
@@ -150,25 +179,15 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
               >
                 <div className="flex items-center gap-4">
                   <Globe size={20} />
-                  <span className="font-bold tracking-widest uppercase text-xs">Naver Search Debug</span>
+                  <span className="font-bold tracking-widest uppercase text-xs">Naver Snippet Debug</span>
                 </div>
                 <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <a 
-                href="https://developers.facebook.com/tools/debug/" 
-                target="_blank" 
-                className="flex items-center justify-between p-6 bg-blue-500/5 border border-blue-500/20 text-blue-500 hover:bg-blue-500/10 transition-all group"
-              >
-                <div className="flex items-center gap-4">
-                  <Share2 size={20} />
-                  <span className="font-bold tracking-widest uppercase text-xs">FB / IG Debugger</span>
-                </div>
-                <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
-              </a>
-              <div className="flex items-center p-6 bg-white/5 border border-white/10 text-white/40 italic text-[10px] leading-tight">
-                * 위 도구들은 로그인이 필요할 수 있습니다. <br/> 
-                * 주소 뒤에 ?v=1 을 붙여 보내는 것이 가장 빠릅니다.
-              </div>
+            </div>
+            <div className="mt-8 p-6 bg-white/5 border border-white/10 text-white/40 italic text-[10px] leading-tight space-y-2">
+              <p>* 위 도구들은 네이버/카카오 <b>로그인이 되어 있어야</b> 정상 작동합니다.</p>
+              <p>* 네이버 링크가 404가 뜬다면, 네이버 로그인을 먼저 하신 후 다시 시도해 주세요.</p>
+              <p>* 가장 빠른 방법은 주소 뒤에 <b>?v=1</b> 을 붙여 공유하는 것입니다.</p>
             </div>
           </div>
 

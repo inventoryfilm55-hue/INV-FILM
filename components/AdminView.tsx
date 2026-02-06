@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle, GripVertical } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle, GripVertical, Code, Copy } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -14,20 +14,17 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [authError, setAuthError] = useState(false);
-  const [activeTab, setActiveTab] = useState<'FILMS' | 'SITE_CONTENT'>('FILMS');
+  const [activeTab, setActiveTab] = useState<'FILMS' | 'SITE_CONTENT' | 'SYSTEM'>('FILMS');
   
-  // Drag and Drop State
   const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
-  
-  // Project State
   const [isAdding, setIsAdding] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
-  const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('FILE');
+  const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('URL');
   const [imageLoadError, setImageLoadError] = useState(false);
-  
-  // Site Content State
   const [tempContent, setTempContent] = useState<SiteContent>(siteContent);
+  const [productionCode, setProductionCode] = useState('');
+  const [copySuccess, setCopySuccess] = useState(false);
   
   const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
@@ -43,20 +40,25 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
 
   const handleLogin = (e: React.FormEvent) => {
     e.preventDefault();
-    const cleanInput = passcode.trim().toUpperCase();
-    const MASTER_KEY = '292513QQWW';
-
-    if (cleanInput === MASTER_KEY) { 
+    if (passcode.trim().toUpperCase() === '292513QQWW') { 
       setIsAuthenticated(true);
       sessionStorage.setItem('inv_admin_auth', 'true');
-      setAuthError(false);
     } else {
       setAuthError(true);
-      setTimeout(() => {
-        setAuthError(false);
-        setPasscode('');
-      }, 600);
+      setTimeout(() => setAuthError(false), 600);
     }
+  };
+
+  const handleExportCode = () => {
+    const code = `
+export const PROJECTS = ${JSON.stringify(projects, null, 2)};
+
+export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
+    `;
+    setProductionCode(code.trim());
+    navigator.clipboard.writeText(code.trim());
+    setCopySuccess(true);
+    setTimeout(() => setCopySuccess(false), 2000);
   };
 
   const convertGDriveUrl = (url: string): string => {
@@ -64,504 +66,108 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
     if (url.startsWith('data:')) return url;
     const regex = /(?:id=|\/d\/|\/file\/d\/)([a-zA-Z0-9_-]{20,})/;
     const match = url.match(regex);
-    if (match && match[1]) {
-      return `https://lh3.googleusercontent.com/d/${match[1]}`;
-    }
+    if (match && match[1]) return `https://lh3.googleusercontent.com/d/${match[1]}`;
     return url;
-  };
-
-  const isGDriveLink = (url: string | undefined) => {
-    if (!url) return false;
-    return url.includes('drive.google.com') || url.includes('googleusercontent.com');
-  };
-
-  const getYouTubeEmbedUrl = (url: string) => {
-    if (!url) return '';
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
-    const match = url.match(regExp);
-    if (match && match[2].length === 11) {
-      return `https://www.youtube.com/embed/${match[2]}`;
-    }
-    return url;
-  };
-
-  const handleVideoUrlChange = (val: string) => {
-    const cleanUrl = getYouTubeEmbedUrl(val);
-    setProjectFormData({...projectFormData, videoUrl: cleanUrl});
-  };
-
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'thumbnail') => {
-    const files = e.target.files;
-    if (!files || files.length === 0) return;
-
-    const processFile = (file: File) => {
-      if (file.size > 2 * 1024 * 1024) {
-        alert(`${file.name}의 용량이 너무 큽니다. 2MB 이하의 이미지를 권장합니다.`);
-      }
-      return new Promise<string>((resolve) => {
-        const reader = new FileReader();
-        reader.onloadend = () => resolve(reader.result as string);
-        reader.readAsDataURL(file);
-      });
-    };
-
-    if (type === 'thumbnail') {
-      processFile(files[0] as File).then(base64 => {
-        setProjectFormData(prev => ({ ...prev, thumbnail: base64 }));
-        setImageLoadError(false);
-      });
-    }
-  };
-
-  // Drag and Drop Handlers
-  const handleDragStart = (e: React.DragEvent, index: number) => {
-    setDraggedIndex(index);
-    e.dataTransfer.effectAllowed = "move";
-    // Set dummy data for Firefox compatibility
-    e.dataTransfer.setData("text/plain", index.toString());
-  };
-
-  const handleDragOver = (e: React.DragEvent, index: number) => {
-    e.preventDefault();
-    if (draggedIndex === null || draggedIndex === index) return;
-
-    const newProjects = [...projects];
-    const itemToMove = newProjects[draggedIndex];
-    newProjects.splice(draggedIndex, 1);
-    newProjects.splice(index, 0, itemToMove);
-    
-    setDraggedIndex(index);
-    onUpdateProjects(newProjects);
-  };
-
-  const handleDragEnd = () => {
-    setDraggedIndex(null);
-  };
-
-  const startEditing = (project: Project) => {
-    setEditingProjectId(project.id);
-    setProjectFormData(project);
-    setThumbMode(project.thumbnail?.startsWith('data:') ? 'FILE' : 'URL');
-    setIsAdding(false);
-    setImageLoadError(false);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const saveProject = () => {
     const finalThumbnail = projectFormData.thumbnail ? convertGDriveUrl(projectFormData.thumbnail) : '';
-    
     if (editingProjectId) {
-      const updatedProjects = projects.map(p => p.id === editingProjectId ? { ...p, ...projectFormData, thumbnail: finalThumbnail } as Project : p);
-      onUpdateProjects(updatedProjects);
+      const updated = projects.map(p => p.id === editingProjectId ? { ...p, ...projectFormData, thumbnail: finalThumbnail } as Project : p);
+      onUpdateProjects(updated);
       setEditingProjectId(null);
     } else {
-      const newProject = {
-        ...projectFormData,
-        id: Date.now().toString(),
-        thumbnail: finalThumbnail,
-        category: projectFormData.category || 'BRANDED CONTENT',
-        aspectRatio: projectFormData.aspectRatio || '16:9',
-        gallery: projectFormData.gallery || [],
-        director: projectFormData.director || 'INV-FILM',
-        year: projectFormData.year || new Date().getFullYear().toString(),
-        description: projectFormData.description || ''
-      } as Project;
-      onUpdateProjects([newProject, ...projects]);
+      const newP = { ...projectFormData, id: Date.now().toString(), thumbnail: finalThumbnail } as Project;
+      onUpdateProjects([newP, ...projects]);
       setIsAdding(false);
     }
     setProjectFormData({});
   };
 
-  const saveSiteContent = () => {
-    const normalizedContent = {
-      ...tempContent,
-      about: {
-        ...tempContent.about,
-        img1: convertGDriveUrl(tempContent.about.img1),
-        img2: convertGDriveUrl(tempContent.about.img2)
-      }
-    };
-    onUpdateContent(normalizedContent);
-    alert('Site content updated successfully.');
-  };
-
   if (!isAuthenticated) {
     return (
       <div className="fixed inset-0 z-[500] bg-[#050505] flex items-center justify-center p-6">
-        <div className={`w-full max-w-md bg-neutral-900/50 border p-12 rounded-sm text-center shadow-[0_30px_100px_rgba(0,0,0,0.8)] relative transition-all duration-300 ${authError ? 'border-red-500 animate-shake' : 'border-white/10'}`}>
-          <div className={`mb-10 inline-flex items-center justify-center w-20 h-20 rounded-full bg-black border text-[#84cc16] transition-colors ${authError ? 'border-red-500 text-red-500' : 'border-white/10'}`}>
-            <Lock size={32} />
-          </div>
-          <h1 className="text-3xl font-logo font-black text-white tracking-tighter uppercase mb-2">Admin Access</h1>
-          <p className="text-[10px] text-neutral-500 tracking-[0.3em] uppercase mb-10 font-bold">INV-FILM SECURE SYSTEM</p>
-          
-          <form onSubmit={handleLogin} className="space-y-6">
-            <div className="relative">
-              <input 
-                type="password" 
-                value={passcode} 
-                onChange={(e) => setPasscode(e.target.value)} 
-                placeholder="ENTER PASSCODE" 
-                className={`w-full bg-black border p-5 text-center text-white tracking-[0.5em] font-bold outline-none transition-all ${authError ? 'border-red-500 text-red-500' : 'border-white/10 focus:border-[#84cc16]'}`} 
-                autoFocus 
-              />
-              {authError && <p className="absolute -bottom-6 left-0 w-full text-[9px] text-red-500 font-black tracking-widest uppercase">Invalid passcode. access denied.</p>}
-            </div>
-            <button 
-              type="submit" 
-              className={`w-full py-5 font-logo font-black tracking-widest uppercase transition-all flex items-center justify-center gap-3 ${authError ? 'bg-red-500 text-white' : 'bg-[#84cc16] text-black hover:bg-white'}`}
-            >
-              {authError ? 'Authorize' : 'Authorize'} <ArrowRight size={18} />
-            </button>
+        <div className={`w-full max-w-md bg-neutral-900/50 border p-12 rounded-sm text-center shadow-2xl transition-all ${authError ? 'border-red-500 animate-shake' : 'border-white/10'}`}>
+          <Lock className="mx-auto mb-8 text-[#84cc16]" size={40} />
+          <h1 className="text-2xl font-logo font-black text-white uppercase mb-8">Admin Access</h1>
+          <form onSubmit={handleLogin} className="space-y-4">
+            <input type="password" value={passcode} onChange={(e) => setPasscode(e.target.value)} placeholder="ENTER PASSCODE" className="w-full bg-black border border-white/10 p-4 text-center text-white outline-none focus:border-[#84cc16]" />
+            <button type="submit" className="w-full py-4 bg-[#84cc16] text-black font-logo font-black uppercase hover:bg-white transition-all">Authorize</button>
           </form>
-
-          <button 
-            onClick={() => window.location.href = '/'}
-            className="mt-12 text-[10px] text-neutral-600 hover:text-white uppercase tracking-widest flex items-center justify-center gap-2 mx-auto transition-colors font-bold"
-          >
-            <Home size={12} /> Exit to Home
-          </button>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="max-w-[1800px] mx-auto px-6 md:px-12 py-32 animate-fade-up">
-      <div className="flex flex-col md:flex-row justify-between items-start lg:items-center mb-16 gap-8 border-b border-white/10 pb-8">
-        <div className="flex gap-12">
-          <button onClick={() => setActiveTab('FILMS')} className={`group relative pb-4 transition-all ${activeTab === 'FILMS' ? 'text-white' : 'text-white/20 hover:text-white/40'}`}>
-            <span className="text-4xl md:text-6xl font-logo font-black tracking-tighter uppercase">Films</span>
-            {activeTab === 'FILMS' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#84cc16] shadow-[0_0_15px_#84cc16]"></span>}
+    <div className="max-w-[1800px] mx-auto px-6 py-20 lg:py-32 animate-fade-up">
+      <div className="flex flex-wrap gap-12 mb-16 border-b border-white/10 pb-6">
+        {['FILMS', 'SITE_CONTENT', 'SYSTEM'].map((tab) => (
+          <button key={tab} onClick={() => setActiveTab(tab as any)} className={`relative pb-2 font-logo font-black uppercase tracking-widest text-2xl ${activeTab === tab ? 'text-[#84cc16]' : 'text-neutral-600'}`}>
+            {tab}
+            {activeTab === tab && <span className="absolute bottom-[-2px] left-0 w-full h-[2px] bg-[#84cc16]"></span>}
           </button>
-          <button onClick={() => setActiveTab('SITE_CONTENT')} className={`group relative pb-4 transition-all ${activeTab === 'SITE_CONTENT' ? 'text-white' : 'text-white/20 hover:text-white/40'}`}>
-            <span className="text-4xl md:text-6xl font-logo font-black tracking-tighter uppercase">Content</span>
-            {activeTab === 'SITE_CONTENT' && <span className="absolute bottom-0 left-0 w-full h-1 bg-[#84cc16] shadow-[0_0_15px_#84cc16]"></span>}
-          </button>
-        </div>
-        
-        {activeTab === 'SITE_CONTENT' && (
-          <button 
-            onClick={saveSiteContent}
-            className="px-12 py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center gap-3 shadow-[0_10px_30px_rgba(132,204,22,0.3)]"
-          >
-            <Save size={20} /> Publish All Changes
-          </button>
-        )}
+        ))}
       </div>
 
-      {activeTab === 'FILMS' ? (
-        <div className="space-y-8">
-          <div className="flex justify-between items-center mb-10">
-            <h3 className="text-xl font-logo font-bold text-white uppercase tracking-wider">Project Management</h3>
-            <button 
-              onClick={() => { setIsAdding(!isAdding); setEditingProjectId(null); setProjectFormData({}); setImageLoadError(false); }} 
-              className="px-8 py-4 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all"
-            >
-              {isAdding ? 'Close Form' : '+ New Project'}
-            </button>
-          </div>
-
-          {(isAdding || editingProjectId) && (
-             <div className="bg-white/5 border border-[#84cc16]/30 mb-12 animate-in slide-in-from-top duration-500 overflow-hidden rounded-sm">
-               <div className="grid grid-cols-1 xl:grid-cols-12">
-                 <div className="xl:col-span-8 p-10 border-r border-white/5">
-                   <h4 className="text-[#84cc16] font-logo font-black text-xl mb-8 uppercase flex items-center gap-3">
-                     {editingProjectId ? <Edit3 size={20}/> : <Plus size={20}/>}
-                     {editingProjectId ? 'Edit Project' : 'Create New Project'}
-                   </h4>
-                   
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                     <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Title</label>
-                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.title || ''} onChange={e => setProjectFormData({...projectFormData, title: e.target.value})} placeholder="Project Title" />
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Client</label>
-                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} placeholder="Client Name" />
-                     </div>
-
-                     <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director</label>
-                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.director || ''} onChange={e => setProjectFormData({...projectFormData, director: e.target.value})} placeholder="Director Name" />
-                     </div>
-                     <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Production Year</label>
-                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.year || ''} onChange={e => setProjectFormData({...projectFormData, year: e.target.value})} placeholder="e.g. 2024" />
-                     </div>
-                     
-                     <div className="space-y-2 md:col-span-2">
-                        <div className="flex items-center justify-between mb-2">
-                          <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Main Thumbnail</label>
-                          <div className="flex gap-2">
-                            <button onClick={() => setThumbMode('FILE')} className={`px-4 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-sm border transition-all ${thumbMode === 'FILE' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-transparent text-neutral-500 border-white/10 hover:border-white/30'}`}><Upload size={12} className="inline mr-1" /> File</button>
-                            <button onClick={() => setThumbMode('URL')} className={`px-4 py-1.5 text-[9px] font-black tracking-widest uppercase rounded-sm border transition-all ${thumbMode === 'URL' ? 'bg-[#84cc16] text-black border-[#84cc16]' : 'bg-transparent text-neutral-500 border-white/10 hover:border-white/30'}`}><LinkIcon size={12} className="inline mr-1" /> URL</button>
-                          </div>
-                        </div>
-
-                        {thumbMode === 'FILE' ? (
-                          <div 
-                            onClick={() => thumbnailInputRef.current?.click()}
-                            className={`w-full h-56 border-2 border-dashed flex flex-col items-center justify-center gap-4 cursor-pointer transition-all overflow-hidden relative
-                              ${projectFormData.thumbnail ? 'border-[#84cc16]/50 bg-black' : 'border-white/10 bg-black/50 hover:border-[#84cc16]/50 hover:bg-[#84cc16]/5'}
-                            `}
-                          >
-                            <input type="file" ref={thumbnailInputRef} className="hidden" accept="image/*" onChange={(e) => handleImageUpload(e, 'thumbnail')} />
-                            {projectFormData.thumbnail && projectFormData.thumbnail.startsWith('data:') ? (
-                              <img src={projectFormData.thumbnail} className="absolute inset-0 w-full h-full object-cover opacity-50" referrerPolicy="no-referrer" alt="Preview" />
-                            ) : null}
-                            <div className="relative z-10 flex flex-col items-center gap-2">
-                              {projectFormData.thumbnail ? <RefreshCw size={24} className="text-[#84cc16]" /> : <Upload size={32} className="text-neutral-700" />}
-                              <span className="text-[10px] text-white font-black tracking-widest uppercase">{projectFormData.thumbnail ? 'Change File' : 'Upload Frame'}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="space-y-4">
-                            <div className="relative">
-                              <input 
-                                className={`w-full bg-black border p-5 pr-40 text-white focus:border-[#84cc16] outline-none text-sm placeholder:text-neutral-700 transition-colors ${imageLoadError ? 'border-red-500/50' : 'border-white/10'}`}
-                                value={projectFormData.thumbnail && !projectFormData.thumbnail.startsWith('data:') ? projectFormData.thumbnail : ''} 
-                                onChange={e => {
-                                  setProjectFormData({...projectFormData, thumbnail: e.target.value});
-                                  setImageLoadError(false);
-                                }} 
-                                placeholder="Paste Google Drive link here" 
-                              />
-                              {isGDriveLink(projectFormData.thumbnail) && (
-                                <div className="absolute right-4 top-1/2 -translate-y-1/2 flex items-center gap-2 bg-[#84cc16]/20 text-[#84cc16] px-3 py-1.5 rounded-sm border border-[#84cc16]/30">
-                                  <Globe size={12} className="animate-pulse" />
-                                  <span className="text-[8px] font-black tracking-widest uppercase">SECURED LINK</span>
-                                </div>
-                              )}
-                            </div>
-                            <div className="p-4 bg-black/50 border border-white/5 rounded-sm text-[9px] text-neutral-500 uppercase leading-relaxed tracking-widest">
-                               <p className="flex items-center gap-2 text-white mb-1"><AlertCircle size={10} className="text-[#84cc16]"/> G-DRIVE 다이렉트 엔진 활성화</p>
-                               lh3 서버를 경유하여 이미지를 직접 불러옵니다. 공유 설정을 "모든 사용자"로 변경해 주세요.
-                            </div>
-                          </div>
-                        )}
-                     </div>
-
-                     <div className="space-y-2">
-                       <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">YouTube Link</label>
-                       <input className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.videoUrl || ''} onChange={e => handleVideoUrlChange(e.target.value)} placeholder="YouTube URL" />
-                     </div>
-
-                     <div className="space-y-2">
-                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Category</label>
-                        <select className="w-full bg-black border border-white/10 p-4 text-white focus:border-[#84cc16] outline-none" value={projectFormData.category || 'BRANDED CONTENT'} onChange={e => setProjectFormData({...projectFormData, category: e.target.value as Category})}>
-                          <option value="BRANDED CONTENT">BRANDED CONTENT</option>
-                          <option value="AI-STUDIO">AI-STUDIO</option>
-                          <option value="INTERVIEW">INTERVIEW</option>
-                          <option value="MAKING">MAKING</option>
-                        </select>
-                     </div>
-
-                     <div className="space-y-2 md:col-span-2">
-                        <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Grid Ratio</label>
-                        <div className="flex gap-4">
-                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '16:9'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '16:9' || !projectFormData.aspectRatio ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Monitor size={16} /> 16:9</button>
-                          <button onClick={() => setProjectFormData({...projectFormData, aspectRatio: '9:16'})} className={`flex-1 py-4 border flex items-center justify-center gap-3 transition-all ${projectFormData.aspectRatio === '9:16' ? 'bg-white text-black border-white' : 'bg-transparent text-white/40 border-white/10 hover:border-white/30'}`}><Smartphone size={16} /> 9:16</button>
-                        </div>
-                     </div>
-                   </div>
-
-                   <div className="flex items-end gap-4 mt-12 pt-10 border-t border-white/5">
-                     <button onClick={saveProject} className="flex-grow py-5 bg-[#84cc16] text-black font-logo font-black tracking-widest uppercase hover:bg-white transition-all flex items-center justify-center gap-2 shadow-[0_10px_30px_rgba(132,204,22,0.2)]"><Save size={18} /> Update Film Inventory</button>
-                     <button onClick={() => { setIsAdding(false); setEditingProjectId(null); setImageLoadError(false); }} className="px-8 py-5 bg-white/5 text-white hover:bg-white/10 transition-all border border-white/10"><X size={18} /></button>
-                   </div>
-                 </div>
-
-                 {/* Real-time Preview */}
-                 <div className="xl:col-span-4 bg-black/60 p-12 flex flex-col items-center justify-center text-center">
-                    <div className={`relative bg-neutral-900 border shadow-2xl overflow-hidden transition-all duration-700 ${imageLoadError ? 'border-red-500/40' : 'border-white/10'} ${projectFormData.aspectRatio === '9:16' ? 'w-[180px] aspect-[9/16]' : 'w-full aspect-video'}`}>
-                      {projectFormData.thumbnail ? (
-                        <img 
-                          src={convertGDriveUrl(projectFormData.thumbnail)} 
-                          onLoad={() => setImageLoadError(false)}
-                          onError={() => setImageLoadError(true)}
-                          referrerPolicy="no-referrer"
-                          className={`w-full h-full object-cover transition-opacity duration-500 ${imageLoadError ? 'opacity-0' : 'opacity-80 hover:opacity-100'}`} 
-                          alt="Preview" 
-                        />
-                      ) : null}
-                      
-                      {(!projectFormData.thumbnail || imageLoadError) && (
-                        <div className="absolute inset-0 flex flex-col items-center justify-center p-6 bg-black">
-                          {imageLoadError ? <WifiOff size={40} className="text-red-500 mb-4" /> : <ImageIcon size={40} className="text-neutral-800 mb-4" />}
-                          <h6 className={`${imageLoadError ? 'text-red-500' : 'text-neutral-700'} font-logo font-black text-xs uppercase mb-2`}>{imageLoadError ? 'Link Error' : 'No Image'}</h6>
-                          <p className="text-white/20 text-[8px] uppercase tracking-widest leading-relaxed">
-                            {imageLoadError ? '드라이브 공유 설정이\n"모두"인지 확인하세요' : '영상 프레임 대기 중'}
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                 </div>
-               </div>
-             </div>
-          )}
-
-          <div className="grid grid-cols-1 gap-4">
-            {projects.map((p, index) => {
-              const displayThumbnail = convertGDriveUrl(p.thumbnail);
-              const sequenceNumber = (index + 1).toString().padStart(2, '0');
-              const isDragging = draggedIndex === index;
-
-              return (
-                <div 
-                  key={p.id} 
-                  draggable
-                  onDragStart={(e) => handleDragStart(e, index)}
-                  onDragOver={(e) => handleDragOver(e, index)}
-                  onDragEnd={handleDragEnd}
-                  className={`group flex flex-col md:flex-row items-center gap-6 px-6 py-4 bg-white/5 border transition-all relative cursor-move
-                    ${isDragging ? 'opacity-40 border-[#84cc16] scale-[0.98]' : 'hover:border-[#84cc16]/30 border-white/5'}
-                  `}
-                >
-                  
-                  {/* Drag Handle & Sequence Position Badge */}
-                  <div className="flex flex-col items-center justify-center px-4 border-r border-white/5 h-full min-w-[80px]">
-                    <GripVertical size={16} className="text-neutral-700 mb-2 group-hover:text-[#84cc16] transition-colors" />
-                    <span className="text-[10px] font-black text-neutral-600 uppercase tracking-widest mb-1">Pos</span>
-                    <span className="font-logo font-black text-3xl text-[#84cc16]">#{sequenceNumber}</span>
-                  </div>
-
-                  <div className={`w-full md:w-32 bg-neutral-900 border border-white/5 relative overflow-hidden shrink-0 ${p.aspectRatio === '9:16' ? 'aspect-[9/16]' : 'aspect-video'}`}>
-                    <img src={displayThumbnail} referrerPolicy="no-referrer" className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" alt={p.title} />
-                  </div>
-
-                  <div className="flex-grow text-center md:text-left">
-                    <div className="flex items-center justify-center md:justify-start gap-3 mb-1">
-                      <h4 className="text-white font-logo font-bold text-lg uppercase tracking-tight">{p.title}</h4>
-                      <span className="text-[8px] px-2 py-0.5 bg-white/10 text-white/40 font-black rounded-sm">{p.aspectRatio}</span>
-                    </div>
-                    <p className="text-neutral-500 text-[10px] font-bold tracking-[0.3em] uppercase">{p.client} — {p.category}</p>
-                    <p className="text-[#84cc16]/40 text-[9px] font-black tracking-[0.2em] uppercase mt-1">Dir. {p.director} • {p.year}</p>
-                  </div>
-
-                  <div className="flex items-center gap-3">
-                    <button onClick={() => startEditing(p)} className="p-3 bg-white/5 text-white hover:bg-[#84cc16] hover:text-black transition-all rounded-sm"><Edit3 size={18} /></button>
-                    <button onClick={() => { if(window.confirm('Delete this project?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 bg-white/5 text-red-500 hover:bg-red-500 hover:text-white transition-all rounded-sm"><Trash2 size={18} /></button>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          
-          <div className="text-center py-10 opacity-30 select-none">
-            <p className="text-[10px] font-black tracking-[0.5em] uppercase flex items-center justify-center gap-4">
-               <span className="w-8 h-[1px] bg-white"></span>
-               DRAG & DROP TO REORDER INVENTORY
-               <span className="w-8 h-[1px] bg-white"></span>
+      {activeTab === 'SYSTEM' && (
+        <div className="max-w-4xl space-y-8">
+          <div className="bg-neutral-900/50 border border-[#84cc16]/20 p-10 rounded-sm">
+            <div className="flex items-center gap-4 mb-6">
+              <Code className="text-[#84cc16]" size={24} />
+              <h3 className="text-xl font-logo font-black text-white uppercase tracking-tighter">Production Sync Tool</h3>
+            </div>
+            <p className="text-neutral-400 text-xs leading-relaxed mb-10">
+              디렉터님이 PC에서 수정한 내용을 인스타그램/네이버 방문자에게 똑같이 보여주려면 이 도구가 필요합니다.<br/>
+              아래 버튼을 눌러 생성된 코드를 저(AI)에게 전달하고 **"이 코드로 constants.tsx를 업데이트해줘"**라고 요청하세요.
             </p>
+            
+            <button 
+              onClick={handleExportCode} 
+              className="w-full py-5 bg-[#84cc16] text-black font-logo font-black uppercase flex items-center justify-center gap-3 hover:bg-white transition-all mb-6"
+            >
+              {copySuccess ? <CheckCircle size={20} /> : <Copy size={20} />}
+              {copySuccess ? 'Code Copied!' : 'Generate Sync Code'}
+            </button>
+
+            {productionCode && (
+              <pre className="bg-black p-6 rounded-sm text-[9px] font-mono text-neutral-500 overflow-x-auto border border-white/5 max-h-60">
+                {productionCode}
+              </pre>
+            )}
           </div>
         </div>
-      ) : (
-        <div className="space-y-20 animate-in fade-in slide-in-from-bottom-10 pb-20">
-          {/* Directors Section Editor */}
-          <div className="bg-white/5 border border-white/10 rounded-sm p-10">
-            <h4 className="text-white font-logo font-black text-2xl mb-12 uppercase flex items-center gap-4">
-              <span className="w-8 h-[2px] bg-[#84cc16]"></span>
-              Directors View Editor
-            </h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">First Name</label>
-                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.directors.name} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, name: e.target.value}})} />
-              </div>
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Last Name</label>
-                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.directors.subName} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, subName: e.target.value}})} />
-              </div>
-              <div className="space-y-4 md:col-span-2">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Manifesto</label>
-                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.directors.manifesto} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, manifesto: e.target.value}})} />
-              </div>
+      )}
 
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Process Title</label>
-                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.directors.processTitle} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processTitle: e.target.value}})} />
-              </div>
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Process Description</label>
-                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.directors.processDesc} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processDesc: e.target.value}})} />
-              </div>
-
-              <div className="space-y-4 md:col-span-2">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Core Disciplines (Tags)</label>
-                <div className="flex flex-wrap gap-3 mb-4">
-                  {tempContent.directors.disciplines.map((d, i) => (
-                    <div key={i} className="flex items-center gap-2 bg-white/5 border border-white/10 px-4 py-2 rounded-sm group">
-                      <span className="text-white text-xs font-bold uppercase tracking-widest">{d}</span>
-                      <button onClick={() => setTempContent({...tempContent, directors: {...tempContent.directors, disciplines: tempContent.directors.disciplines.filter((_, idx) => idx !== i)}})} className="text-neutral-500 hover:text-red-500 transition-colors"><MinusCircle size={14}/></button>
-                    </div>
-                  ))}
-                  <button 
-                    onClick={() => {
-                      const val = prompt('Enter new discipline:');
-                      if(val) setTempContent({...tempContent, directors: {...tempContent.directors, disciplines: [...tempContent.directors.disciplines, val]}});
-                    }}
-                    className="flex items-center gap-2 bg-[#84cc16]/10 border border-[#84cc16]/30 px-4 py-2 rounded-sm text-[#84cc16] hover:bg-[#84cc16] hover:text-black transition-all"
-                  >
-                    <PlusCircle size={14}/> <span className="text-[10px] font-black uppercase tracking-widest">Add New</span>
-                  </button>
-                </div>
-              </div>
-            </div>
+      {activeTab === 'FILMS' && (
+        <div className="space-y-6">
+          <div className="flex justify-between items-center mb-8">
+            <h3 className="text-lg font-logo font-black text-white uppercase tracking-wider">Inventory</h3>
+            <button onClick={() => setIsAdding(!isAdding)} className="px-6 py-2 bg-[#84cc16] text-black font-logo font-black text-xs uppercase">{isAdding ? 'Close' : 'Add New'}</button>
           </div>
-
-          {/* About Section Editor */}
-          <div className="bg-white/5 border border-white/10 rounded-sm p-10">
-            <h4 className="text-white font-logo font-black text-2xl mb-12 uppercase flex items-center gap-4">
-              <span className="w-8 h-[2px] bg-[#84cc16]"></span>
-              About Us Editor
-            </h4>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-10">
-              <div className="space-y-4 md:col-span-2">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Headline</label>
-                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none text-2xl font-bold" value={tempContent.about.headline} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, headline: e.target.value}})} />
-              </div>
-              
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description Part 1</label>
-                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.about.description1} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, description1: e.target.value}})} />
-              </div>
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description Part 2</label>
-                <textarea className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none h-32" value={tempContent.about.description2} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, description2: e.target.value}})} />
-              </div>
-
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Image 1 URL (Google Drive Supported)</label>
-                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.img1} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, img1: e.target.value}})} />
-              </div>
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Image 2 URL (Google Drive Supported)</label>
-                <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.img2} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, img2: e.target.value}})} />
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:col-span-2">
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Philosophy</label>
-                  <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.philosophy} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, philosophy: e.target.value}})} />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Production Hub</label>
-                  <input className="w-full bg-black border border-white/10 p-5 text-white focus:border-[#84cc16] outline-none" value={tempContent.about.hub} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, hub: e.target.value}})} />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Innovation Label</label>
-                  <input className="w-full bg-black border border-white/10 p-5 text-[#84cc16] focus:border-[#84cc16] outline-none font-bold" value={tempContent.about.innovation} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, innovation: e.target.value}})} />
+          <div className="grid gap-4">
+            {projects.map((p, i) => (
+              <div key={p.id} className="flex items-center gap-6 p-5 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
+                <span className="text-[#84cc16] font-logo font-black text-xl">{(i+1).toString().padStart(2, '0')}</span>
+                <div className="w-20 aspect-video bg-neutral-900 overflow-hidden"><img src={convertGDriveUrl(p.thumbnail)} className="w-full h-full object-cover opacity-60" /></div>
+                <div className="flex-grow font-logo font-bold uppercase text-white tracking-widest">{p.title}</div>
+                <div className="flex gap-4">
+                  <button onClick={() => { setEditingProjectId(p.id); setProjectFormData(p); }} className="text-neutral-500 hover:text-white"><Edit3 size={18} /></button>
+                  <button onClick={() => onUpdateProjects(projects.filter(item => item.id !== p.id))} className="text-neutral-500 hover:text-red-500"><Trash2 size={18} /></button>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-          
-          <div className="text-center pt-10 border-t border-white/5">
-             <p className="text-[#84cc16] text-[10px] font-bold tracking-[0.4em] uppercase animate-pulse">시스템: 입력하신 정보는 상단의 Publish 버튼을 눌러야 최종 반영됩니다.</p>
+        </div>
+      )}
+
+      {activeTab === 'SITE_CONTENT' && (
+        <div className="bg-white/5 border border-white/10 p-10 space-y-10">
+          <div className="space-y-4">
+             <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director Name</label>
+             <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.name} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, name: e.target.value}})} />
           </div>
+          <button onClick={() => onUpdateContent(tempContent)} className="w-full py-5 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest">Update Content</button>
         </div>
       )}
     </div>

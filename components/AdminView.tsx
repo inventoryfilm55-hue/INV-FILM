@@ -130,8 +130,7 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
       {/* SYSTEM TAB */}
       {activeTab === 'SYSTEM' && (
         <div className="max-w-4xl space-y-12 animate-fade-up pb-40">
-          
-          {/* Site Health & Info */}
+          {/* Site Integration */}
           <div className="bg-neutral-900/50 border border-white/10 p-10 rounded-sm">
             <div className="flex items-center gap-4 mb-6">
               <LinkIcon className="text-[#84cc16]" size={24} />
@@ -161,33 +160,20 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
               <b>방법:</b> 사이트 URL을 복사한 후, 아래 링크를 열어 "URL" 입력창에 붙여넣고 초기화(제출)를 누르세요.
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <a 
-                href="https://developers.kakao.com/tool/clear/og" 
-                target="_blank" 
-                className="flex items-center justify-between p-6 bg-yellow-400/5 border border-yellow-400/20 text-yellow-500 hover:bg-yellow-400/10 transition-all group"
-              >
+              <a href="https://developers.kakao.com/tool/clear/og" target="_blank" className="flex items-center justify-between p-6 bg-yellow-400/5 border border-yellow-400/20 text-yellow-500 hover:bg-yellow-400/10 transition-all group">
                 <div className="flex items-center gap-4">
                   <MessageSquare size={20} />
                   <span className="font-bold tracking-widest uppercase text-xs">Kakao Cache Tool</span>
                 </div>
                 <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-              <a 
-                href="https://searchadvisor.naver.com/tools/debug" 
-                target="_blank" 
-                className="flex items-center justify-between p-6 bg-green-500/5 border border-green-500/20 text-green-500 hover:bg-green-500/10 transition-all group"
-              >
+              <a href="https://searchadvisor.naver.com/" target="_blank" className="flex items-center justify-between p-6 bg-green-500/5 border border-green-500/20 text-green-500 hover:bg-green-500/10 transition-all group">
                 <div className="flex items-center gap-4">
                   <Globe size={20} />
-                  <span className="font-bold tracking-widest uppercase text-xs">Naver Snippet Debug</span>
+                  <span className="font-bold tracking-widest uppercase text-xs">Naver Search Advisor</span>
                 </div>
                 <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
               </a>
-            </div>
-            <div className="mt-8 p-6 bg-white/5 border border-white/10 text-white/40 italic text-[10px] leading-tight space-y-2">
-              <p>* 위 도구들은 네이버/카카오 <b>로그인이 되어 있어야</b> 정상 작동합니다.</p>
-              <p>* 네이버 링크가 404가 뜬다면, 네이버 로그인을 먼저 하신 후 다시 시도해 주세요.</p>
-              <p>* 가장 빠른 방법은 주소 뒤에 <b>?v=1</b> 을 붙여 공유하는 것입니다.</p>
             </div>
           </div>
 
@@ -224,7 +210,7 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
             </button>
           </div>
 
-          {/* Project Form (Add/Edit) */}
+          {/* Project Form */}
           {(isAdding || editingProjectId) && (
             <div className="bg-white/5 border border-[#84cc16]/30 p-10 mb-16 space-y-8 animate-fade-up rounded-sm">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -239,36 +225,13 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
                   </select>
                 </div>
                 <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Thumbnail URL (GDrive/Direct)</label>
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Thumbnail (GDrive Link)</label>
                   <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.thumbnail || ''} onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} />
                 </div>
                 <div className="space-y-4">
                   <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">YouTube URL</label>
                   <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.videoUrl || ''} onChange={e => setProjectFormData({...projectFormData, videoUrl: e.target.value})} />
                 </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Client</label>
-                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director</label>
-                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.director || ''} onChange={e => setProjectFormData({...projectFormData, director: e.target.value})} />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Year</label>
-                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.year || ''} onChange={e => setProjectFormData({...projectFormData, year: e.target.value})} />
-                </div>
-                <div className="space-y-4">
-                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Aspect Ratio</label>
-                  <select className="w-full bg-black border border-white/10 p-4 text-white appearance-none" value={projectFormData.aspectRatio || '16:9'} onChange={e => setProjectFormData({...projectFormData, aspectRatio: e.target.value as AspectRatio})}>
-                    <option value="16:9">16:9 (Horizontal)</option>
-                    <option value="9:16">9:16 (Vertical)</option>
-                  </select>
-                </div>
-              </div>
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description</label>
-                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-24" value={projectFormData.description || ''} onChange={e => setProjectFormData({...projectFormData, description: e.target.value})} />
               </div>
               <div className="flex gap-4">
                 <button onClick={saveProject} className="flex-grow py-5 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest hover:bg-white transition-all">Save Project</button>
@@ -283,15 +246,15 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
               <div key={p.id} className="flex items-center gap-6 p-5 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all rounded-sm group">
                 <span className="text-[#84cc16] font-logo font-black text-xl w-10">{(i+1).toString().padStart(2, '0')}</span>
                 <div className="w-24 aspect-video bg-neutral-900 overflow-hidden flex-shrink-0">
-                  <img src={convertGDriveUrl(p.thumbnail)} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                  <img src={convertGDriveUrl(p.thumbnail)} className="w-full h-full object-cover opacity-60" />
                 </div>
                 <div className="flex-grow">
                   <div className="font-logo font-black uppercase text-white tracking-widest text-lg">{p.title}</div>
-                  <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">{p.category} | {p.year}</div>
+                  <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">{p.category}</div>
                 </div>
                 <div className="flex gap-4">
-                  <button onClick={() => { setEditingProjectId(p.id); setProjectFormData(p); setIsAdding(false); }} className="p-3 text-neutral-500 hover:text-white hover:bg-white/5 rounded-sm transition-all"><Edit3 size={20} /></button>
-                  <button onClick={() => { if(confirm('Delete project?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 text-neutral-500 hover:text-red-500 hover:bg-red-500/5 rounded-sm transition-all"><Trash2 size={20} /></button>
+                  <button onClick={() => { setEditingProjectId(p.id); setProjectFormData(p); setIsAdding(false); }} className="p-3 text-neutral-500 hover:text-white"><Edit3 size={20} /></button>
+                  <button onClick={() => { if(confirm('Delete?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 text-neutral-500 hover:text-red-500"><Trash2 size={20} /></button>
                 </div>
               </div>
             ))}
@@ -302,6 +265,59 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
       {/* SITE CONTENT TAB */}
       {activeTab === 'SITE_CONTENT' && (
         <div className="max-w-4xl space-y-12 animate-fade-up">
+          {/* About Section Management */}
+          <div className="bg-white/5 border border-white/10 p-10 space-y-10 rounded-sm">
+            <h3 className="text-xl font-logo font-black text-[#84cc16] uppercase tracking-widest border-b border-white/5 pb-6">About Page Management</h3>
+            
+            <div className="space-y-4">
+              <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Main Headline</label>
+              <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.about.headline} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, headline: e.target.value}})} />
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Hero Background (IMG 1)</label>
+                <div className="relative group">
+                   <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.about.img1} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, img1: e.target.value}})} placeholder="Paste Link or G-Drive URL" />
+                   <div className="mt-2 text-[9px] text-neutral-500 uppercase tracking-widest italic">* 이 이미지가 전체 배경이 됩니다.</div>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Secondary Image (IMG 2)</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.about.img2} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, img2: e.target.value}})} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description Part 1</label>
+                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-32" value={tempContent.about.description1} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, description1: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description Part 2</label>
+                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-32" value={tempContent.about.description2} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, description2: e.target.value}})} />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Philosophy</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.about.philosophy} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, philosophy: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Hub</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.about.hub} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, hub: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Innovation</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.about.innovation} onChange={e => setTempContent({...tempContent, about: {...tempContent.about, innovation: e.target.value}})} />
+              </div>
+            </div>
+
+            <button onClick={() => onUpdateContent(tempContent)} className="w-full py-6 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest hover:bg-white transition-all shadow-[0_10px_30px_rgba(132,204,22,0.2)]">Update Global Content</button>
+          </div>
+
+          {/* Directors Management */}
           <div className="bg-white/5 border border-white/10 p-10 space-y-10 rounded-sm">
             <h3 className="text-xl font-logo font-black text-[#84cc16] uppercase tracking-widest border-b border-white/5 pb-6">Directors Section</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -314,23 +330,6 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
                 <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.subName} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, subName: e.target.value}})} />
               </div>
             </div>
-            <div className="space-y-4">
-              <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Manifesto</label>
-              <textarea className="w-full bg-black border border-white/10 p-4 text-white h-32" value={tempContent.directors.manifesto} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, manifesto: e.target.value}})} />
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Process Title</label>
-                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.processTitle} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processTitle: e.target.value}})} />
-                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-24 text-xs" value={tempContent.directors.processDesc} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processDesc: e.target.value}})} />
-              </div>
-              <div className="space-y-4">
-                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Tech Title</label>
-                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.techTitle} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, techTitle: e.target.value}})} />
-                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-24 text-xs" value={tempContent.directors.techDesc} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, techDesc: e.target.value}})} />
-              </div>
-            </div>
-            <button onClick={() => onUpdateContent(tempContent)} className="w-full py-6 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest hover:bg-white transition-all shadow-[0_10px_30px_rgba(132,204,22,0.2)]">Update Global Content</button>
           </div>
         </div>
       )}

@@ -19,24 +19,27 @@ const resolveThumbnail = (url: string) => {
 };
 
 // Reusable Project Card Component
-const ProjectCard = ({ project, index, onProjectClick }: { project: Project; index: number; onProjectClick: (project: Project) => void }) => {
+// Fix: Added React.FC typing to resolve 'key' prop error by informing TypeScript this is a React component
+const ProjectCard: React.FC<{ project: Project; index: number; onProjectClick: (project: Project) => void }> = ({ project, index, onProjectClick }) => {
   const isVertical = project.aspectRatio === '9:16';
   
   return (
       <div
           onClick={() => onProjectClick(project)}
-          className="relative group cursor-pointer animate-fade-up flex flex-col w-full"
+          className="relative group cursor-pointer animate-fade-up flex flex-col w-full mb-8 md:mb-0"
           style={{ animationDelay: `${index * 0.05}s` }}
       >
+          {/* Image Container */}
           <div className={`relative overflow-hidden bg-neutral-900 transition-all duration-700 w-full ${isVertical ? 'aspect-[9/16]' : 'aspect-video'}`}>
               <img
                   src={resolveThumbnail(project.thumbnail)}
                   alt={project.title}
                   referrerPolicy="no-referrer"
-                  className="w-full h-full object-cover transition-transform duration-[2000ms] cubic-bezier(0.16, 1, 0.3, 1) group-hover:scale-105 opacity-90 group-hover:opacity-100"
+                  className="w-full h-full object-cover transition-transform duration-[2000ms] cubic-bezier(0.16, 1, 0.3, 1) md:group-hover:scale-105 opacity-90 md:group-hover:opacity-100"
               />
               
-              <div className="absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex flex-col items-center justify-center p-8 md:p-16 text-center backdrop-blur-[12px]">
+              {/* Desktop Only Overlay (Hidden on Mobile) */}
+              <div className="hidden md:flex absolute inset-0 bg-black/80 opacity-0 group-hover:opacity-100 transition-all duration-500 flex-col items-center justify-center p-8 md:p-16 text-center backdrop-blur-[12px]">
                   <div className="w-full max-w-full flex flex-col items-center translate-y-6 group-hover:translate-y-0 transition-all duration-700">
                       <p className="text-[#84cc16] text-[max(8px,0.5vw)] font-black tracking-[0.6em] uppercase mb-5 opacity-0 group-hover:opacity-100 transition-opacity delay-100">
                           {project.category}
@@ -54,11 +57,30 @@ const ProjectCard = ({ project, index, onProjectClick }: { project: Project; ind
                   </div>
               </div>
 
+              {/* AI Badge - Always visible */}
               {project.category === 'AI-STUDIO' && (
-                  <div className="absolute top-4 right-4 bg-[#84cc16] text-black text-[7px] font-black tracking-[0.1em] px-2 py-1 rounded-sm uppercase group-hover:opacity-0 transition-opacity pointer-events-none">
+                  <div className="absolute top-4 right-4 bg-[#84cc16] text-black text-[7px] font-black tracking-[0.1em] px-2 py-1 rounded-sm uppercase md:group-hover:opacity-0 transition-opacity pointer-events-none z-10">
                       AI CORE
                   </div>
               )}
+          </div>
+
+          {/* Mobile Only Info Block (Visible only on small screens) */}
+          <div className="md:hidden mt-4 px-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <p className="text-[#84cc16] text-[8px] font-black tracking-[0.3em] uppercase">
+                {project.category}
+              </p>
+              <p className="text-white/30 text-[8px] font-bold tracking-[0.2em] uppercase">
+                {project.year}
+              </p>
+            </div>
+            <h3 className="text-white font-logo font-black text-xl leading-tight tracking-tighter uppercase">
+              {project.title}
+            </h3>
+            <p className="text-white/40 text-[9px] font-bold tracking-[0.3em] uppercase">
+              Dir. {project.director}
+            </p>
           </div>
       </div>
   );
@@ -69,15 +91,13 @@ const ProjectGrid: React.FC<ProjectGridProps> = ({ projects, activeCategory, onP
     ? projects 
     : projects.filter(p => p.category === activeCategory);
 
-  // Split projects for Zig-Zag Masonry (Left: 0, 2, 4... | Right: 1, 3, 5...)
-  // This ensures Project #1 is Left, Project #2 is Right visually.
   const leftColumn = filteredProjects.filter((_, i) => i % 2 === 0);
   const rightColumn = filteredProjects.filter((_, i) => i % 2 === 1);
 
   return (
     <main className="max-w-[2400px] mx-auto px-0.5 md:px-1 py-1 pb-1">
-      {/* Mobile: Standard Stack (1, 2, 3...) */}
-      <div className="flex flex-col gap-0.5 md:hidden">
+      {/* Mobile: Standard Stack (1, 2, 3...) - Info is now always visible below img */}
+      <div className="flex flex-col gap-8 md:hidden mb-12">
         {filteredProjects.map((project, idx) => (
           <ProjectCard key={project.id} project={project} index={idx} onProjectClick={onProjectClick} />
         ))}

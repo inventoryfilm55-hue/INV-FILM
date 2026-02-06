@@ -24,7 +24,6 @@ const App: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
 
-  // Helper to normalize any YT link to embed format
   const normalizeYT = (url: string) => {
     if (!url) return '';
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=|shorts\/)([^#&?]*).*/;
@@ -33,50 +32,44 @@ const App: React.FC = () => {
   };
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'instant' });
+    // Scroll Reset on view change
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [currentView]);
 
   useEffect(() => {
-    // 1. Load Projects
+    // 1. Data Merging Logic: Local Storage vs constants.tsx
+    // If user has saved something locally, it takes precedence.
+    // Otherwise, it falls back to the hardcoded constants.
     const savedProjects = localStorage.getItem('inv_film_projects');
-    let loadedProjects: Project[] = [];
-    
-    if (savedProjects) {
-      try { 
-        const parsed = JSON.parse(savedProjects);
-        loadedProjects = Array.isArray(parsed) ? parsed : INITIAL_PROJECTS;
-      } catch (e) { 
-        loadedProjects = INITIAL_PROJECTS; 
-      }
-    } else {
-      loadedProjects = INITIAL_PROJECTS;
-    }
-
-    const fixedProjects = loadedProjects.map(p => ({
-      ...p,
-      videoUrl: normalizeYT(p.videoUrl)
-    }));
-
-    setProjects(fixedProjects);
-
-    // 2. Load Site Content
     const savedContent = localStorage.getItem('inv_site_content');
-    if (savedContent) {
-      try { 
-        setSiteContent(JSON.parse(savedContent)); 
-      } catch (e) { 
-        setSiteContent(DEFAULT_SITE_CONTENT); 
+    
+    let finalProjects = INITIAL_PROJECTS;
+    let finalContent = DEFAULT_SITE_CONTENT;
+
+    try {
+      if (savedProjects) {
+        const parsed = JSON.parse(savedProjects);
+        if (Array.isArray(parsed) && parsed.length > 0) finalProjects = parsed;
       }
+      if (savedContent) {
+        const parsed = JSON.parse(savedContent);
+        if (parsed && parsed.directors) finalContent = parsed;
+      }
+    } catch (e) {
+      console.error("Data load failed, falling back to constants.");
     }
 
-    // Loading Progress Simulation
+    setProjects(finalProjects.map(p => ({ ...p, videoUrl: normalizeYT(p.videoUrl) })));
+    setSiteContent(finalContent);
+
+    // Initial Loading Experience
     let currentProgress = 0;
     const interval = setInterval(() => {
-      currentProgress += Math.random() * 20;
+      currentProgress += Math.random() * 30;
       if (currentProgress >= 100) {
         currentProgress = 100;
         clearInterval(interval);
-        setTimeout(() => setIsLoading(false), 500);
+        setTimeout(() => setIsLoading(false), 600);
       }
       setProgress(currentProgress);
     }, 100);
@@ -95,32 +88,19 @@ const App: React.FC = () => {
     localStorage.setItem('inv_site_content', JSON.stringify(newContent));
   };
 
-  const handleConnectIdea = (idea: SynopsisResponse) => {
-    setInitialRequestData(idea);
-    setIsAIOpen(false);
-    setIsRequestOpen(true);
-  };
-
   if (isLoading) {
     return (
       <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center z-[1000]">
-        <div className="text-center w-full max-w-sm px-10">
-          <h1 className="font-logo text-6xl md:text-8xl font-black tracking-tighter text-white mb-12">
-            INV FILM
-          </h1>
-          <div className="w-full h-[1px] bg-white/10 relative overflow-hidden">
-            <div 
-              className="absolute top-0 left-0 h-full bg-[#84cc16] shadow-[0_0_15px_#84cc16] transition-all duration-300 ease-out"
-              style={{ width: `${progress}%` }}
-            ></div>
-          </div>
+        <h1 className="font-logo text-5xl md:text-7xl font-black tracking-tighter text-white mb-8 animate-pulse">INV FILM</h1>
+        <div className="w-48 h-[1px] bg-white/10 relative overflow-hidden">
+          <div className="absolute top-0 left-0 h-full bg-[#84cc16] transition-all duration-300" style={{ width: `${progress}%` }}></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen pt-[160px] lg:pt-[85px] bg-[#050505]">
+    <div className="min-h-screen pt-[70px] lg:pt-[85px] bg-[#050505]">
       <Header 
         onOpenAI={() => setIsAIOpen(true)}
         onOpenRequest={() => setIsRequestOpen(true)}
@@ -128,21 +108,13 @@ const App: React.FC = () => {
         currentView={currentView}
       />
 
-      <main className="relative">
+      <main>
         {currentView === 'HOME' && (
           <>
-            <SubNav 
-              activeCategory={activeCategory}
-              onCategoryChange={setActiveCategory}
-            />
-            <ProjectGrid 
-              projects={projects} 
-              activeCategory={activeCategory} 
-              onProjectClick={setSelectedProject}
-            />
+            <SubNav activeCategory={activeCategory} onCategoryChange={setActiveCategory} />
+            <ProjectGrid projects={projects} activeCategory={activeCategory} onProjectClick={setSelectedProject} />
           </>
         )}
-
         {currentView === 'DIRECTORS' && <DirectorsView content={siteContent.directors} />}
         {currentView === 'ABOUT' && <AboutView content={siteContent.about} />}
         {currentView === 'ADMIN' && (
@@ -155,37 +127,19 @@ const App: React.FC = () => {
         )}
       </main>
 
-      <footer className="py-24 border-t border-white/5 mt-20 px-8 md:px-12 bg-black/20">
-        <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-16 md:gap-0">
-          <div className="flex flex-col items-center md:items-start gap-4">
-            <h2 className="font-logo text-3xl font-black tracking-tighter text-white">INV FILM</h2>
-            <p className="text-[10px] text-neutral-600 font-bold tracking-[0.5em] uppercase">Inventory Archive — 2025</p>
+      <footer className="py-20 border-t border-white/5 mt-20 px-8 text-center md:text-left">
+        <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-8">
+          <h2 className="font-logo text-2xl font-black text-white">INV FILM</h2>
+          <div className="flex gap-8 text-[10px] font-bold uppercase tracking-widest text-neutral-500">
+            <a href="https://instagram.com/inventory_film" target="_blank" className="hover:text-white">Instagram</a>
+            <button onClick={() => setCurrentView('ADMIN')} className="hover:text-[#84cc16]">Admin Access</button>
           </div>
-          
-          <div className="flex flex-wrap justify-center gap-10 md:gap-16 text-[11px] font-bold tracking-[0.4em] uppercase text-neutral-500">
-            <a href="https://instagram.com/inventory_film" target="_blank" className="hover:text-[#84cc16] transition-colors">Instagram</a>
-            <a href="#" className="hover:text-[#84cc16] transition-colors">Kakao</a>
-            <button 
-              onClick={() => setCurrentView('ADMIN')} 
-              className={`hover:text-[#84cc16] transition-colors ${currentView === 'ADMIN' ? 'text-[#84cc16]' : ''}`}
-            >
-              Admin Access
-            </button>
-          </div>
-
-          <div className="flex flex-col items-center md:items-end gap-2">
-            <p className="text-[9px] text-neutral-700 font-bold tracking-widest uppercase">
-              © All Rights Reserved. INV-FILM Production.
-            </p>
-            <p className="text-[8px] text-neutral-800 font-black tracking-widest uppercase">
-              Seoul Hub — Global Vision
-            </p>
-          </div>
+          <p className="text-[9px] text-neutral-700 font-bold tracking-widest uppercase">© 2025 INV-FILM Production.</p>
         </div>
       </footer>
       
       {selectedProject && <ProjectModal project={selectedProject} onClose={() => setSelectedProject(null)} />}
-      {isAIOpen && <AICreativeLab onClose={() => setIsAIOpen(false)} onConnectIdea={handleConnectIdea} />}
+      {isAIOpen && <AICreativeLab onClose={() => setIsAIOpen(false)} onConnectIdea={(idea) => { setInitialRequestData(idea); setIsAIOpen(false); setIsRequestOpen(true); }} />}
       {isRequestOpen && <RequestModal onClose={() => { setIsRequestOpen(false); setInitialRequestData(null); }} initialData={initialRequestData} />}
     </div>
   );

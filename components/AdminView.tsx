@@ -16,17 +16,12 @@ const AdminView: React.FC<AdminViewProps> = ({ projects, siteContent, onUpdatePr
   const [authError, setAuthError] = useState(false);
   const [activeTab, setActiveTab] = useState<'FILMS' | 'SITE_CONTENT' | 'SYSTEM'>('FILMS');
   
-  const [draggedIndex, setDraggedIndex] = useState<number | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [editingProjectId, setEditingProjectId] = useState<string | null>(null);
   const [projectFormData, setProjectFormData] = useState<Partial<Project>>({});
-  const [thumbMode, setThumbMode] = useState<'FILE' | 'URL'>('URL');
-  const [imageLoadError, setImageLoadError] = useState(false);
   const [tempContent, setTempContent] = useState<SiteContent>(siteContent);
   const [productionCode, setProductionCode] = useState('');
   const [copySuccess, setCopySuccess] = useState(false);
-  
-  const thumbnailInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     const sessionAuth = sessionStorage.getItem('inv_admin_auth');
@@ -77,10 +72,21 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
       onUpdateProjects(updated);
       setEditingProjectId(null);
     } else {
-      const newP = { ...projectFormData, id: Date.now().toString(), thumbnail: finalThumbnail } as Project;
+      const newP = { 
+        ...projectFormData, 
+        id: Date.now().toString(), 
+        thumbnail: finalThumbnail,
+        gallery: projectFormData.gallery || [] 
+      } as Project;
       onUpdateProjects([newP, ...projects]);
       setIsAdding(false);
     }
+    setProjectFormData({});
+  };
+
+  const cancelEdit = () => {
+    setIsAdding(false);
+    setEditingProjectId(null);
     setProjectFormData({});
   };
 
@@ -99,8 +105,11 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
     );
   }
 
+  const categories: Category[] = ['BRANDED CONTENT', 'INTERVIEW', 'MAKING', 'AI-STUDIO'];
+
   return (
     <div className="max-w-[1800px] mx-auto px-6 py-20 lg:py-32 animate-fade-up">
+      {/* Tab Navigation */}
       <div className="flex flex-wrap gap-12 mb-16 border-b border-white/10 pb-6">
         {['FILMS', 'SITE_CONTENT', 'SYSTEM'].map((tab) => (
           <button key={tab} onClick={() => setActiveTab(tab as any)} className={`relative pb-2 font-logo font-black uppercase tracking-widest text-2xl ${activeTab === tab ? 'text-[#84cc16]' : 'text-neutral-600'}`}>
@@ -110,8 +119,9 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
         ))}
       </div>
 
+      {/* SYSTEM TAB */}
       {activeTab === 'SYSTEM' && (
-        <div className="max-w-4xl space-y-8">
+        <div className="max-w-4xl space-y-8 animate-fade-up">
           <div className="bg-neutral-900/50 border border-[#84cc16]/20 p-10 rounded-sm">
             <div className="flex items-center gap-4 mb-6">
               <Code className="text-[#84cc16]" size={24} />
@@ -121,15 +131,10 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
               디렉터님이 PC에서 수정한 내용을 인스타그램/네이버 방문자에게 똑같이 보여주려면 이 도구가 필요합니다.<br/>
               아래 버튼을 눌러 생성된 코드를 저(AI)에게 전달하고 **"이 코드로 constants.tsx를 업데이트해줘"**라고 요청하세요.
             </p>
-            
-            <button 
-              onClick={handleExportCode} 
-              className="w-full py-5 bg-[#84cc16] text-black font-logo font-black uppercase flex items-center justify-center gap-3 hover:bg-white transition-all mb-6"
-            >
+            <button onClick={handleExportCode} className="w-full py-5 bg-[#84cc16] text-black font-logo font-black uppercase flex items-center justify-center gap-3 hover:bg-white transition-all mb-6">
               {copySuccess ? <CheckCircle size={20} /> : <Copy size={20} />}
               {copySuccess ? 'Code Copied!' : 'Generate Sync Code'}
             </button>
-
             {productionCode && (
               <pre className="bg-black p-6 rounded-sm text-[9px] font-mono text-neutral-500 overflow-x-auto border border-white/5 max-h-60">
                 {productionCode}
@@ -139,21 +144,84 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
         </div>
       )}
 
+      {/* FILMS TAB */}
       {activeTab === 'FILMS' && (
-        <div className="space-y-6">
+        <div className="space-y-12 animate-fade-up">
           <div className="flex justify-between items-center mb-8">
             <h3 className="text-lg font-logo font-black text-white uppercase tracking-wider">Inventory</h3>
-            <button onClick={() => setIsAdding(!isAdding)} className="px-6 py-2 bg-[#84cc16] text-black font-logo font-black text-xs uppercase">{isAdding ? 'Close' : 'Add New'}</button>
+            <button onClick={() => setIsAdding(!isAdding)} className="px-8 py-3 bg-[#84cc16] text-black font-logo font-black text-sm uppercase hover:bg-white transition-all">
+              {isAdding ? 'Close' : 'Add New Film'}
+            </button>
           </div>
+
+          {/* Project Form (Add/Edit) */}
+          {(isAdding || editingProjectId) && (
+            <div className="bg-white/5 border border-[#84cc16]/30 p-10 mb-16 space-y-8 animate-fade-up rounded-sm">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Title</label>
+                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.title || ''} onChange={e => setProjectFormData({...projectFormData, title: e.target.value})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Category</label>
+                  <select className="w-full bg-black border border-white/10 p-4 text-white appearance-none" value={projectFormData.category || 'BRANDED CONTENT'} onChange={e => setProjectFormData({...projectFormData, category: e.target.value as Category})}>
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Thumbnail URL (GDrive/Direct)</label>
+                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.thumbnail || ''} onChange={e => setProjectFormData({...projectFormData, thumbnail: e.target.value})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">YouTube URL</label>
+                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.videoUrl || ''} onChange={e => setProjectFormData({...projectFormData, videoUrl: e.target.value})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Client</label>
+                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.client || ''} onChange={e => setProjectFormData({...projectFormData, client: e.target.value})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director</label>
+                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.director || ''} onChange={e => setProjectFormData({...projectFormData, director: e.target.value})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Year</label>
+                  <input className="w-full bg-black border border-white/10 p-4 text-white" value={projectFormData.year || ''} onChange={e => setProjectFormData({...projectFormData, year: e.target.value})} />
+                </div>
+                <div className="space-y-4">
+                  <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Aspect Ratio</label>
+                  <select className="w-full bg-black border border-white/10 p-4 text-white appearance-none" value={projectFormData.aspectRatio || '16:9'} onChange={e => setProjectFormData({...projectFormData, aspectRatio: e.target.value as AspectRatio})}>
+                    <option value="16:9">16:9 (Horizontal)</option>
+                    <option value="9:16">9:16 (Vertical)</option>
+                  </select>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Description</label>
+                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-24" value={projectFormData.description || ''} onChange={e => setProjectFormData({...projectFormData, description: e.target.value})} />
+              </div>
+              <div className="flex gap-4">
+                <button onClick={saveProject} className="flex-grow py-5 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest hover:bg-white transition-all">Save Project</button>
+                <button onClick={cancelEdit} className="px-8 py-5 border border-white/10 text-white hover:border-white transition-all">Cancel</button>
+              </div>
+            </div>
+          )}
+
+          {/* Project List */}
           <div className="grid gap-4">
             {projects.map((p, i) => (
-              <div key={p.id} className="flex items-center gap-6 p-5 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all">
-                <span className="text-[#84cc16] font-logo font-black text-xl">{(i+1).toString().padStart(2, '0')}</span>
-                <div className="w-20 aspect-video bg-neutral-900 overflow-hidden"><img src={convertGDriveUrl(p.thumbnail)} className="w-full h-full object-cover opacity-60" /></div>
-                <div className="flex-grow font-logo font-bold uppercase text-white tracking-widest">{p.title}</div>
+              <div key={p.id} className="flex items-center gap-6 p-5 bg-white/5 border border-white/5 hover:border-[#84cc16]/30 transition-all rounded-sm group">
+                <span className="text-[#84cc16] font-logo font-black text-xl w-10">{(i+1).toString().padStart(2, '0')}</span>
+                <div className="w-24 aspect-video bg-neutral-900 overflow-hidden flex-shrink-0">
+                  <img src={convertGDriveUrl(p.thumbnail)} className="w-full h-full object-cover opacity-60 group-hover:opacity-100 transition-opacity" />
+                </div>
+                <div className="flex-grow">
+                  <div className="font-logo font-black uppercase text-white tracking-widest text-lg">{p.title}</div>
+                  <div className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">{p.category} | {p.year}</div>
+                </div>
                 <div className="flex gap-4">
-                  <button onClick={() => { setEditingProjectId(p.id); setProjectFormData(p); }} className="text-neutral-500 hover:text-white"><Edit3 size={18} /></button>
-                  <button onClick={() => onUpdateProjects(projects.filter(item => item.id !== p.id))} className="text-neutral-500 hover:text-red-500"><Trash2 size={18} /></button>
+                  <button onClick={() => { setEditingProjectId(p.id); setProjectFormData(p); setIsAdding(false); }} className="p-3 text-neutral-500 hover:text-white hover:bg-white/5 rounded-sm transition-all"><Edit3 size={20} /></button>
+                  <button onClick={() => { if(confirm('Delete project?')) onUpdateProjects(projects.filter(item => item.id !== p.id)) }} className="p-3 text-neutral-500 hover:text-red-500 hover:bg-red-500/5 rounded-sm transition-all"><Trash2 size={20} /></button>
                 </div>
               </div>
             ))}
@@ -161,13 +229,39 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
         </div>
       )}
 
+      {/* SITE CONTENT TAB */}
       {activeTab === 'SITE_CONTENT' && (
-        <div className="bg-white/5 border border-white/10 p-10 space-y-10">
-          <div className="space-y-4">
-             <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director Name</label>
-             <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.name} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, name: e.target.value}})} />
+        <div className="max-w-4xl space-y-12 animate-fade-up">
+          <div className="bg-white/5 border border-white/10 p-10 space-y-10 rounded-sm">
+            <h3 className="text-xl font-logo font-black text-[#84cc16] uppercase tracking-widest border-b border-white/5 pb-6">Directors Section</h3>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Director Name</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.name} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, name: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Sub Name</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.subName} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, subName: e.target.value}})} />
+              </div>
+            </div>
+            <div className="space-y-4">
+              <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Manifesto</label>
+              <textarea className="w-full bg-black border border-white/10 p-4 text-white h-32" value={tempContent.directors.manifesto} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, manifesto: e.target.value}})} />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Process Title</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.processTitle} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processTitle: e.target.value}})} />
+                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-24 text-xs" value={tempContent.directors.processDesc} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, processDesc: e.target.value}})} />
+              </div>
+              <div className="space-y-4">
+                <label className="text-[10px] text-neutral-500 font-bold uppercase tracking-widest">Tech Title</label>
+                <input className="w-full bg-black border border-white/10 p-4 text-white" value={tempContent.directors.techTitle} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, techTitle: e.target.value}})} />
+                <textarea className="w-full bg-black border border-white/10 p-4 text-white h-24 text-xs" value={tempContent.directors.techDesc} onChange={e => setTempContent({...tempContent, directors: {...tempContent.directors, techDesc: e.target.value}})} />
+              </div>
+            </div>
+            <button onClick={() => onUpdateContent(tempContent)} className="w-full py-6 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest hover:bg-white transition-all shadow-[0_10px_30px_rgba(132,204,22,0.2)]">Update Global Content</button>
           </div>
-          <button onClick={() => onUpdateContent(tempContent)} className="w-full py-5 bg-[#84cc16] text-black font-logo font-black uppercase tracking-widest">Update Content</button>
         </div>
       )}
     </div>

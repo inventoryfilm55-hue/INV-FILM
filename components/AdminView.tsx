@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import { Project, Category, AspectRatio, SiteContent } from '../types';
-import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle, GripVertical, Code, Copy } from 'lucide-react';
+import { Trash2, Lock, ArrowRight, Edit3, Save, X, Image as ImageIcon, CheckCircle, ChevronUp, ChevronDown, Monitor, Smartphone, AlertCircle, Upload, Plus, RefreshCw, Link as LinkIcon, Globe, ShieldAlert, WifiOff, Home, PlusCircle, MinusCircle, GripVertical, Code, Copy, ExternalLink, MessageSquare, Share2 } from 'lucide-react';
 
 interface AdminViewProps {
   projects: Project[];
@@ -121,7 +121,58 @@ export const DEFAULT_SITE_CONTENT = ${JSON.stringify(siteContent, null, 2)};
 
       {/* SYSTEM TAB */}
       {activeTab === 'SYSTEM' && (
-        <div className="max-w-4xl space-y-8 animate-fade-up">
+        <div className="max-w-4xl space-y-12 animate-fade-up pb-40">
+          {/* Cache Busting Section */}
+          <div className="bg-neutral-900/50 border border-white/10 p-10 rounded-sm">
+            <div className="flex items-center gap-4 mb-6">
+              <RefreshCw className="text-[#84cc16]" size={24} />
+              <h3 className="text-xl font-logo font-black text-white uppercase tracking-tighter">Cache Clearing Tools</h3>
+            </div>
+            <p className="text-neutral-400 text-xs leading-relaxed mb-8">
+              도메인 연결 후 카카오톡이나 네이버에 주소를 보냈을 때 예전 이미지가 뜬다면, 아래 도구들을 사용해 해당 플랫폼의 기억을 지워야 합니다.
+            </p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <a 
+                href="https://developers.kakao.com/tool/clear/og" 
+                target="_blank" 
+                className="flex items-center justify-between p-6 bg-yellow-400/5 border border-yellow-400/20 text-yellow-500 hover:bg-yellow-400/10 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <MessageSquare size={20} />
+                  <span className="font-bold tracking-widest uppercase text-xs">Kakao Cache Clear</span>
+                </div>
+                <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <a 
+                href="https://searchadvisor.naver.com/tools/debug" 
+                target="_blank" 
+                className="flex items-center justify-between p-6 bg-green-500/5 border border-green-500/20 text-green-500 hover:bg-green-500/10 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <Globe size={20} />
+                  <span className="font-bold tracking-widest uppercase text-xs">Naver Search Debug</span>
+                </div>
+                <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <a 
+                href="https://developers.facebook.com/tools/debug/" 
+                target="_blank" 
+                className="flex items-center justify-between p-6 bg-blue-500/5 border border-blue-500/20 text-blue-500 hover:bg-blue-500/10 transition-all group"
+              >
+                <div className="flex items-center gap-4">
+                  <Share2 size={20} />
+                  <span className="font-bold tracking-widest uppercase text-xs">FB / IG Debugger</span>
+                </div>
+                <ExternalLink size={16} className="opacity-0 group-hover:opacity-100 transition-opacity" />
+              </a>
+              <div className="flex items-center p-6 bg-white/5 border border-white/10 text-white/40 italic text-[10px] leading-tight">
+                * 위 도구들은 로그인이 필요할 수 있습니다. <br/> 
+                * 주소 뒤에 ?v=1 을 붙여 보내는 것이 가장 빠릅니다.
+              </div>
+            </div>
+          </div>
+
+          {/* Sync Tool Section */}
           <div className="bg-neutral-900/50 border border-[#84cc16]/20 p-10 rounded-sm">
             <div className="flex items-center gap-4 mb-6">
               <Code className="text-[#84cc16]" size={24} />

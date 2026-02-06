@@ -32,13 +32,12 @@ const App: React.FC = () => {
     return (match && match[2].length === 11) ? `https://www.youtube.com/embed/${match[2]}` : url;
   };
 
-  // View 전환 시 최상단 스크롤
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' });
   }, [currentView]);
 
   useEffect(() => {
-    // Initial data load
+    // 1. Load Projects
     const savedProjects = localStorage.getItem('inv_film_projects');
     let loadedProjects: Project[] = [];
     
@@ -59,24 +58,28 @@ const App: React.FC = () => {
     }));
 
     setProjects(fixedProjects);
-    localStorage.setItem('inv_film_projects', JSON.stringify(fixedProjects));
 
+    // 2. Load Site Content
     const savedContent = localStorage.getItem('inv_site_content');
     if (savedContent) {
-      try { setSiteContent(JSON.parse(savedContent)); } catch (e) { setSiteContent(DEFAULT_SITE_CONTENT); }
+      try { 
+        setSiteContent(JSON.parse(savedContent)); 
+      } catch (e) { 
+        setSiteContent(DEFAULT_SITE_CONTENT); 
+      }
     }
 
     // Loading Progress Simulation
     let currentProgress = 0;
     const interval = setInterval(() => {
-      currentProgress += Math.random() * 15;
+      currentProgress += Math.random() * 20;
       if (currentProgress >= 100) {
         currentProgress = 100;
         clearInterval(interval);
         setTimeout(() => setIsLoading(false), 500);
       }
       setProgress(currentProgress);
-    }, 150);
+    }, 100);
     
     return () => clearInterval(interval);
   }, []);
@@ -152,7 +155,6 @@ const App: React.FC = () => {
         )}
       </main>
 
-      {/* Restored Footer for Admin and Brand contents */}
       <footer className="py-24 border-t border-white/5 mt-20 px-8 md:px-12 bg-black/20">
         <div className="max-w-[1800px] mx-auto flex flex-col md:flex-row justify-between items-center gap-16 md:gap-0">
           <div className="flex flex-col items-center md:items-start gap-4">

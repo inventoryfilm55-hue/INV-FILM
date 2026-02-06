@@ -37,6 +37,7 @@ export interface SiteContent {
     description2: string;
     img1: string;
     img2: string;
+    videoBg?: string; // 배경 영상 지원
     philosophy: string;
     hub: string;
     innovation: string;
